@@ -808,8 +808,8 @@
       $('emptyState').querySelector('.big').textContent = 'Failed to load pack';
       $('emptyState').querySelector('p+p, p:last-child').textContent = 'Could not reach GitHub. Try again or load a local file.';
       $('dropzone').hidden = false;
-      packLoading = false;
     } finally {
+      packLoading = false;
       document.querySelectorAll('.pack-item').forEach(b=>b.classList.remove('loading'));
     }
   }
