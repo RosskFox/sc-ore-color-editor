@@ -141,6 +141,9 @@
   .hex:focus { border-color:var(--accent); }
   .clear-x { width:22px; height:22px; flex:none; display:grid; place-items:center; color:var(--text-faint); border-radius:var(--radius-sm); }
   .clear-x:hover { color:var(--danger); background:var(--surface-3); }
+  .row.virtual .val { color:var(--text-faint); font-style:italic; }
+  .row.virtual .key { opacity:0.78; }
+  .vtag { flex:none; font-size:9px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; padding:1px 6px; border-radius:9999px; background:var(--accent-soft); color:var(--accent); border:1px solid var(--accent); white-space:nowrap; opacity:0.85; }
   .empty-state { padding:var(--space-12); text-align:center; color:var(--text-muted); }
   .empty-state svg { color:var(--text-faint); margin:0 auto var(--space-4); }
   .empty-state .big { font-size:var(--text-base); color:var(--text); font-weight:500; margin-bottom:var(--space-1); }
@@ -315,8 +318,10 @@
   const $ = id => document.getElementById(id);
 
   // ---------- State ----------
-  let entries = [];        // {i, key, value, raw, hasEq}  (value = original)
-  let filtered = [];      // indices into entries
+  let entries = [];        // {i, key, value, raw, hasEq}  (value = original)  — the LOADED FILE
+  let centerList = [];     // {key, value, inFile} — editable keys shown in center (file + virtual known)
+  let filtered = [];      // indices into centerList
+  let knownValues = new Map(); // key -> default value, from known-keys.ini (all 89k)
   let colors = new Map(); // key -> #RRGGBB  (only explicitly colored keys)
   let filterMode = 'all';
   let outFormat = 'modify';
@@ -349,6 +354,41 @@
     const c = categorizeKey(key); const g = +c.split(':')[0];
     const grp = catGroups[g]; return grp && EDITABLE_GROUP_NAMES.has(grp.name);
   }
+  // Parse the known-keys reference file into a Map (key -> value). Loaded once.
+  function buildKnownValues(text){
+    knownValues = new Map();
+    text = text.replace(/^\uFEFF/, '');
+    const lines = text.split(/\r\n|\r|\n/);
+    for (let i=0;i<lines.length;i++){
+      const line = lines[i];
+      const eq = line.indexOf('=');
+      if (eq === -1) continue;
+      knownValues.set(line.slice(0,eq), line.slice(eq+1));
+    }
+  }
+  // Build the center-pane list: editable keys from the loaded file (file order),
+  // then editable known keys NOT in the file (virtual, sorted) — tagged inFile.
+  function buildCenterList(){
+    centerList = [];
+    const seen = new Set();
+    for (const e of entries){
+      if (!e.hasEq) continue;
+      if (!isEditableKey(e.key)) continue;
+      if (seen.has(e.key)) continue;
+      centerList.push({key:e.key, value:e.value, inFile:true});
+      seen.add(e.key);
+    }
+    if (knownValues.size){
+      const virt = [];
+      for (const [k,v] of knownValues){
+        if (seen.has(k)) continue;
+        if (!isEditableKey(k)) continue;
+        virt.push({key:k, value:v, inFile:false});
+      }
+      virt.sort((a,b)=> a.key<b.key ? -1 : a.key>b.key ? 1 : 0);
+      for (const v of virt) centerList.push(v);
+    }
+  }
 
   async function loadCategories(){
     try {
@@ -368,6 +408,10 @@
       // add a synthetic "Other" bucket as the catch-all group
       catGroups.push({ name: catchAll, categories: [] });
       buildGroupDropdown();
+      // if a file is already loaded (or known keys present), rebuild the center list now
+      if ((entries.length || knownValues.size) && !knownLoading){
+        buildCenterList(); recomputeCatCounts(); buildGroupDropdown(); applyFilter();
+      }
     } catch(e){ console.warn('categories load failed', e); }
   }
   function categorizeKey(key){
@@ -383,7 +427,7 @@
   function recomputeCatCounts(){
     catCounts = new Map();
     editableCount = 0;
-    for (const e of entries){ if (!e.hasEq) continue; const c = categorizeKey(e.key); catCounts.set(c, (catCounts.get(c)||0)+1); if (isEditableKey(e.key)) editableCount++; }
+    for (const e of centerList){ const c = categorizeKey(e.key); catCounts.set(c, (catCounts.get(c)||0)+1); editableCount++; }
   }
   function buildGroupDropdown(){
     const sel = $('catGroup'); sel.innerHTML = '';
@@ -451,8 +495,9 @@
     srcName = name.replace(/\.[^.]+$/, '') || 'source';
     // auto-import: any existing Key=#hex lines become the assigned colors
     const imp = importColorsFromEntries();
+    buildCenterList();
     $('dropzone').hidden = true;
-    $('emptyState').hidden = entries.length>0;
+    $('emptyState').hidden = centerList.length>0 || entries.length>0;
     $('fileMeta').hidden = false;
     $('rawView').hidden = false;
     $('fileMeta').innerHTML = `<span><b>${esc(name)}</b></span><span>${entries.length.toLocaleString()} lines</span><span>${entries.filter(e=>e.hasEq).length.toLocaleString()} keys</span><span>${(text.length/1024).toFixed(0)} KB</span>` + (imp? `<span style="color:var(--accent)">${imp} colors imported</span>`:'');
@@ -517,10 +562,8 @@
     filtered = [];
     const useCat = selCat !== null && catCounts;
     const useGroup = selGroup !== null && catCounts;
-    for (let i=0;i<entries.length;i++){
-      const e = entries[i];
-      if (!e.hasEq) continue;
-      if (!isEditableKey(e.key)) continue;   // center pane is limited to editable groups
+    for (let i=0;i<centerList.length;i++){
+      const e = centerList[i];
       const colored = colors.has(e.key);
       if (filterMode==='colored' && !colored) continue;
       if (filterMode==='uncolored' && colored) continue;
@@ -532,8 +575,8 @@
       if (q){ if (e.key.toLowerCase().indexOf(q)===-1 && (e.value||'').toLowerCase().indexOf(q)===-1) continue; }
       filtered.push(i);
     }
-    $('centerCount').textContent = entries.length ? `${filtered.length.toLocaleString()} / ${editableCount.toLocaleString()}` : '—';
-    $('emptyState').hidden = filtered.length>0 || entries.length===0;
+    $('centerCount').textContent = centerList.length ? `${filtered.length.toLocaleString()} / ${editableCount.toLocaleString()}` : '—';
+    $('emptyState').hidden = filtered.length>0 || centerList.length===0;
     $('vscroll').scrollTop = 0;
     layoutList();
   }
@@ -554,17 +597,19 @@
     const end = Math.min(filtered.length, start + Math.ceil(H/ROW_H)+6);
     let html='';
     for (let i=start;i<end;i++){
-      const e = entries[filtered[i]];
+      const e = centerList[filtered[i]];
       const c = colors.get(e.key) || '';
       const empty = !c;
-      html += `<div class="row" style="top:${i*ROW_H}px" data-i="${filtered[i]}" data-key="${attr(e.key)}">
+      const vtag = e.inFile ? '' : '<span class="vtag" title="Not in loaded file — appended to output if colored">virtual</span>';
+      html += `<div class="row ${e.inFile?'':'virtual'}" style="top:${i*ROW_H}px" data-i="${filtered[i]}" data-key="${attr(e.key)}">
         <span class="idx">${i+1}</span>
         <label class="swatch ${empty?'empty':''}">
           <span class="fill" style="background:${c}"></span>
           <input type="color" value="${c||'#ffffff'}" aria-label="color for ${attr(e.key)}">
         </label>
         <span class="key" title="${attr(e.key)}">${esc(trunc(e.key,44))}</span>
-        <span class="val" title="${attr(e.value||'')}">${esc(trunc(e.value||'',52))}</span>
+        ${vtag}
+        <span class="val" title="${attr(e.value||'')}">${esc(trunc(e.value||'',44))}</span>
         <input class="hex" value="${c||''}" placeholder="—" spellcheck="false">
         <button class="clear-x" title="Clear color" ${empty?'hidden':''} aria-label="clear"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
       </div>`;
@@ -639,7 +684,7 @@
   });
 
   // ---------- Bulk ----------
-  function eachVisible(fn){ filtered.forEach(i=>fn(entries[i].key)); }
+  function eachVisible(fn){ filtered.forEach(i=>fn(centerList[i].key)); }
   $('autoBtn').addEventListener('click', ()=>{
     const n = filtered.length; let i=0;
     eachVisible(k=>{ colors.set(k, hslToHex(Math.round((i/Math.max(n,1))*360), 58, 54)); i++; });
@@ -663,22 +708,28 @@
   // ---------- Output ----------
   function generate(){
     const out = [];
+    const fileKeys = new Set();
     if (outFormat==='modify'){
-      // full file, real keys only; colored keys get value=hex, others keep original
+      // full file: colored real keys set to key=#hex, rest unchanged
       for (const e of entries){
         if (!e.hasEq){ out.push(e.raw); continue; }
+        fileKeys.add(e.key);
         const c = colors.get(e.key);
         out.push(c != null ? `${e.key}=${c}` : e.raw);
       }
+      // append colored keys not present in the file (virtual known keys)
+      for (const [k,c] of colors){ if (!fileKeys.has(k) && knownValues.has(k)) out.push(`${k}=${c}`); }
       return out.join('\r\n');
     }
     if (outFormat==='map'){
-      for (const e of entries){ if (e.hasEq && colors.has(e.key)) out.push(`${e.key}=${colors.get(e.key)}`); }
+      for (const e of entries){ if (e.hasEq && colors.has(e.key)){ fileKeys.add(e.key); out.push(`${e.key}=${colors.get(e.key)}`); } }
+      for (const [k,c] of colors){ if (!fileKeys.has(k) && knownValues.has(k)) out.push(`${k}=${c}`); }
       return out.join('\r\n');
     }
     // section
     out.push('[Colors]');
-    for (const e of entries){ if (e.hasEq && colors.has(e.key)) out.push(`${e.key}=${colors.get(e.key)}`); }
+    for (const e of entries){ if (e.hasEq && colors.has(e.key)){ fileKeys.add(e.key); out.push(`${e.key}=${colors.get(e.key)}`); } }
+    for (const [k,c] of colors){ if (!fileKeys.has(k) && knownValues.has(k)) out.push(`${k}=${c}`); }
     return out.join('\r\n');
   }
   function scheduleGenerate(){
@@ -694,9 +745,9 @@
     });
   });
   function updateFmtHint(){
-    $('fmtHint').innerHTML = outFormat==='modify' ? 'Full file, real keys only — colored keys set to <code>key=#hex</code>, rest unchanged.'
-      : outFormat==='map' ? 'Only colored keys as <code>key=#hex</code>.'
-      : '<code>[Colors]</code> section + colored keys.';
+    $('fmtHint').innerHTML = outFormat==='modify' ? 'Full file — colored keys set to <code>key=#hex</code>; colored keys not in your file are appended.'
+      : outFormat==='map' ? 'Only colored keys as <code>key=#hex</code> (in-file + virtual).'
+      : '<code>[Colors]</code> section + all colored keys (in-file + virtual).';
   }
   function updateStats(){
     let colored=0; colors.forEach(()=>colored++);
@@ -792,19 +843,27 @@
   // ---------- Known keys (merged union of all packs — shipped locally) ----------
   let knownLoading = false;
   async function loadKnownKeys(){
-    if (knownLoading || entries.length) return;
+    if (knownLoading) return;
     knownLoading = true;
-    showLoadingState('Loading 89k known keys…');
+    if (!entries.length) showLoadingState('Loading 89k known keys…');
     try {
       const res = await fetch('known-keys.ini');
       if (!res.ok) throw new Error('HTTP '+res.status);
       const text = await res.text();
-      loadText(text, 'known-keys.ini');
+      buildKnownValues(text);          // always populate the reference dictionary
+      if (!entries.length){
+        // no file loaded yet → use known-keys as the default source file
+        loadText(text, 'known-keys.ini');
+      } else {
+        // a file/pack is already loaded → just add the now-available virtual keys
+        buildCenterList(); recomputeCatCounts(); buildGroupDropdown(); applyFilter();
+      }
     } catch(e){
-      knownLoading = false;
       $('emptyState').querySelector('.big').textContent = 'Failed to load known keys';
       $('dropzone').hidden = false;
       toast('Could not load known-keys.ini');
+    } finally {
+      knownLoading = false;
     }
   }
 
