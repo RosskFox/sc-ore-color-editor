@@ -79,12 +79,14 @@
   .src-actions .mini-btn svg { flex:none; }
   .src-dropdown { position:relative; flex:1; }
   .src-dropdown .mini-btn { width:100%; }
-  .src-menu { position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:50; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md); box-shadow:0 8px 24px rgba(0,0,0,0.18); overflow:hidden; max-height:320px; overflow-y:auto; }
+  .src-menu { position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:50; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md); box-shadow:0 8px 24px rgba(0,0,0,0.18); overflow:hidden; max-height:600px; overflow-y:auto; }
   .pack-item { display:flex; flex-direction:column; gap:2px; padding:var(--space-2) var(--space-3); text-align:left; width:100%; border-bottom:1px solid var(--border-soft); }
   .pack-item:last-child { border-bottom:none; }
   .pack-item:hover { background:var(--surface-2); }
   .pack-item .pack-name { font-size:var(--text-xs); font-weight:600; color:var(--text); }
   .pack-item .pack-desc { font-size:11px; color:var(--text-muted); line-height:1.35; }
+  .pack-item .pack-updated { font-size:10px; color:var(--text-faint); font-family:var(--font-mono); margin-top:2px; }
+  .pack-item .pack-updated b { color:var(--text-muted); font-weight:600; }
   .pack-item.loading { opacity:0.5; pointer-events:none; }
   .dropzone { margin:var(--space-3); padding:var(--space-8) var(--space-4); border:2px dashed var(--border); border-radius:var(--radius-lg); text-align:center; color:var(--text-muted); }
   .dropzone.drag { border-color:var(--accent); background:var(--accent-soft); color:var(--text); }
@@ -225,22 +227,27 @@
             <button class="pack-item" data-pack="stock">
               <span class="pack-name">Stock global.ini</span>
               <span class="pack-desc">Vanilla unmodified LIVE patch (88,992 keys)</span>
+              <span class="pack-updated"><b>Last updated:</b> May 20, 2026</span>
             </button>
             <button class="pack-item" data-pack="beltakoda">
               <span class="pack-name">BeltaKoda Remix</span>
               <span class="pack-desc">Ship component names with Type/Size/Grade prefixes</span>
+              <span class="pack-updated"><b>Last updated:</b> May 20, 2026</span>
             </button>
             <button class="pack-item" data-pack="exoae">
               <span class="pack-name">ExoAE ScCompLangPack</span>
               <span class="pack-desc">Original component naming pack with size/grade info</span>
+              <span class="pack-updated"><b>Last updated:</b> Jul 1, 2026</span>
             </button>
             <button class="pack-item" data-pack="exoae2">
               <span class="pack-name">ExoAE Remix2</span>
               <span class="pack-desc">ExoAE alternative remix variant</span>
+              <span class="pack-updated"><b>Last updated:</b> Jul 1, 2026</span>
             </button>
             <button class="pack-item" data-pack="mrkraken">
               <span class="pack-name">MrKraken StarStrings</span>
               <span class="pack-desc">Mission text, blueprint pools, commodity and UI fixes</span>
+              <span class="pack-updated"><b>Last updated:</b> Jul 1, 2026</span>
             </button>
           </div>
         </div>
@@ -340,6 +347,7 @@
   function ensureOutput(){ if (dirty){ clearTimeout(idleGen); generatedText = generate(); $('output').value = generatedText; dirty=false; $('staleTag').hidden=true; updateStats(); } }
   let srcName = '';
   let srcType = 'Local file';   // 'Local file' | 'Community pack' | 'Merged known keys' | 'Sample'
+  let srcPack = '';             // pack id when loaded from a community pack, else ''
   let srcText = '';             // raw loaded text (for re-rendering the source card)
 
   // ---------- Categories (loaded from StarMeld categories.json) ----------
@@ -366,6 +374,11 @@
   const PACK_NAMES = {
     stock:'stock-global.ini', beltakoda:'BeltaKoda-Remix.ini', exoae:'ExoAE.ini', exoae2:'ExoAE-Remix2.ini', mrkraken:'MrKraken-StarStrings.ini'
   };
+  // Last upstream commit date for each pack's global.ini (via GitHub API, captured 2026-07-10)
+  const PACK_UPDATED = {
+    stock:'2026-05-20', beltakoda:'2026-05-20', exoae:'2026-07-01', exoae2:'2026-07-01', mrkraken:'2026-07-01'
+  };
+  function fmtDate(iso){ if(!iso) return ''; const d=new Date(iso+'T00:00:00Z'); return d.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric',timeZone:'UTC'}); }
   function isEditableKey(key){
     // Scope narrowed to curated keys (mineable commodities + vehicle components from star-citizen.wiki API)
     return CURATED_KEYS.has(key);
@@ -536,6 +549,8 @@
     const lines = entries.length;
     const keys = entries.filter(e=>e.hasEq).length;
     const kb = (text.length/1024).toFixed(0);
+    const updated = srcPack ? fmtDate(PACK_UPDATED[srcPack]) : '';
+    const updatedStat = updated ? `<div class="stat"><span class="k">Last updated</span><span class="v">${updated}</span></div>` : '';
     $('loadedCard').hidden = false;
     $('loadedCard').innerHTML = `
       <div class="lc-head">
@@ -547,6 +562,7 @@
         <div class="stat"><span class="k">Keys</span><span class="v">${keys.toLocaleString()}</span></div>
         <div class="stat"><span class="k">Size</span><span class="v">${kb} KB</span></div>
         <div class="stat"><span class="k">EM tags</span><span class="v">${imp? imp.toLocaleString() : '0 imported'}</span></div>
+        ${updatedStat}
       </div>`;
   }
 
@@ -755,7 +771,7 @@
   $('srcOpenBtn').addEventListener('click', ()=>$('fileInput').click());
   $('fileInput').addEventListener('change', e=>{
     const f=e.target.files[0]; if(!f) return;
-    srcType = 'Local file';
+    srcType = 'Local file'; srcPack = '';
     const r=new FileReader(); r.onload=()=>loadText(String(r.result), f.name); r.readAsText(f);
     e.target.value='';
   });
@@ -764,7 +780,7 @@
   ['dragleave','drop'].forEach(ev=>window.addEventListener(ev,e=>{e.preventDefault(); dz.classList.remove('drag');}));
   window.addEventListener('drop', e=>{
     e.preventDefault(); const f=e.dataTransfer.files[0]; if(!f) return;
-    srcType = 'Local file';
+    srcType = 'Local file'; srcPack = '';
     const r=new FileReader(); r.onload=()=>loadText(String(r.result), f.name); r.readAsText(f);
   });
 
@@ -780,7 +796,7 @@
     if (packLoading) return;
     const url = PACK_URLS[packId]; const name = PACK_NAMES[packId]; if (!url) return;
     packLoading = true;
-    srcType = 'Community pack';
+    srcType = 'Community pack'; srcPack = packId;
     showLoadingState('Loading '+name+'…');
     document.querySelectorAll('.pack-item').forEach(b=>b.classList.add('loading'));
     try {
@@ -830,7 +846,7 @@
       buildKnownValues(text);          // always populate the reference dictionary
       if (!entries.length){
         // no file loaded yet → use known-keys as the default source file
-        srcType = 'Merged known keys';
+        srcType = 'Merged known keys'; srcPack = '';
         loadText(text, 'known-keys.ini');
       } else {
         // a file/pack is already loaded → just add the now-available virtual keys
@@ -862,7 +878,7 @@
 
   // ---------- Sample ----------
   $('sampleBtn').addEventListener('click', ()=>{
-    srcType = 'Sample';
+    srcType = 'Sample'; srcPack = '';
     const sample = `# sample.ini
 items_commodities_Agricium=Agricium
 items_commodities_Bexalite=Bexalite
