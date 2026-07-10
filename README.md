@@ -22,6 +22,8 @@ Live site: **https://rosskfox.github.io/sc-ore-color-editor/**
 
   EM0, EM1, EM3, EM5, and EM6 all fall back to the default UI cyan and have no visible effect, so only EM2 and EM4 are offered.
 
+- **Custom string editing** — beyond assigning a color, you can edit the displayed text of any key directly in the center pane. Edited values appear in the accent color and flow into the output (wrapped in the EM tag when one is assigned, plain `key=value` otherwise). Use the reset (x) button on a row to restore the original text and clear its tag.
+
 - **Curated editable scope** — the center pane is limited to **355 real keys** derived from the [star-citizen.wiki API](https://api.star-citizen.wiki):
   - Mineable commodities (`is_mineable=true`) → `items_commodities_*` keys, including variants (e.g. `items_commodities_carinite`, `_pure`, `_raw`)
   - Vehicle components (`category=vehicle-components`) → `item_Name<class_name>` keys
@@ -59,7 +61,7 @@ Loadable directly from within the app:
 1. Open the [live site](https://rosskfox.github.io/sc-ore-color-editor/).
 2. Load a source file — drag in your own `global.ini`, or pick a community pack from the dropdown.
 3. Search or browse the center pane (try `carinite`, `AbsoluteZero`, etc.).
-4. For each key, pick **EM2 — green** or **EM4 — red** from the dropdown (or use Auto-tag / Randomize for bulk assignment).
+4. For each key: edit the displayed text inline (optional), then pick **EM2 — green** or **EM4 — red** from the dropdown (or use Auto-tag / Randomize for bulk color assignment).
 5. Switch the right pane to **Full output** and click **Download** to get your modified `Global.ini`.
 6. Drop the file into your Star Citizen `Data/Localization/english/` folder.
 

@@ -142,6 +142,9 @@
   .em-sel:focus { border-color:var(--accent); outline:none; }
   .row .key { font-family:var(--font-mono); font-size:12.5px; font-weight:600; color:var(--text); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .row .val { font-family:var(--font-mono); font-size:11px; color:var(--text-faint); flex:1.3; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .val-input { flex:1.3; min-width:0; font-family:var(--font-mono); font-size:11px; color:var(--text); background:var(--surface-3); border:1px solid var(--border-soft); border-radius:var(--radius-sm); padding:3px var(--space-2); }
+  .val-input:focus { border-color:var(--accent); outline:none; color:var(--text); }
+  .val-input.modified { color:var(--accent); border-color:var(--accent-soft); }
   .hex { width:78px; flex:none; font-family:var(--font-mono); font-size:11px; padding:var(--space-1) var(--space-2); background:var(--surface-3); border:1px solid var(--border); border-radius:var(--radius-sm); text-align:center; text-transform:uppercase; }
   .hex:focus { border-color:var(--accent); }
   .clear-x { width:22px; height:22px; flex:none; display:grid; place-items:center; color:var(--text-faint); border-radius:var(--radius-sm); }
@@ -194,7 +197,7 @@
   </div>
   <div class="stats" id="stats">
     <span><b id="stKeys">0</b> keys</span>
-    <span><b id="stColored">0</b> tagged</span>
+    <span><b id="stColored">0</b> modified</span>
     <span><b id="stShown">0</b> shown</span>
   </div>
   <input type="file" id="fileInput" accept=".ini,.txt,.cfg,.conf,text/plain" hidden />
@@ -275,8 +278,8 @@
       </div>
       <div class="filter-chips">
         <button class="chip active" data-filter="all">All</button>
-        <button class="chip" data-filter="colored">Tagged</button>
-        <button class="chip" data-filter="uncolored">Untagged</button>
+        <button class="chip" data-filter="colored">Modified</button>
+        <button class="chip" data-filter="uncolored">Unmodified</button>
       </div>
       <div class="cat-bar">
         <span class="label">Category</span>
@@ -331,6 +334,7 @@
   let filtered = [];      // indices into centerList
   let knownValues = new Map(); // key -> default value, from known-keys.ini (all 89k)
   let colors = new Map(); // key -> EM tag string ('EM0'..'EM5'); only explicitly tagged keys
+  let customValues = new Map(); // key -> edited string value; only keys whose text was changed
   let filterMode = 'all';
   const HIDE_DESC = true;   // permanently hide keys containing '_desc' (description text)
   // Star Citizen localization emphasis tags — IN-GAME VERIFIED colors.
@@ -526,6 +530,8 @@
     parse(text);
     srcName = name.replace(/\.[^.]+$/, '') || 'source';
     srcText = text;
+    // reset modifications on fresh load (re-imported from wrappers below)
+    colors.clear(); customValues.clear();
     // auto-import: any existing <EMn>...</EMn> wrappers become the assigned tags
     const imp = importColorsFromEntries();
     buildCenterList();
@@ -577,25 +583,32 @@
   }
 
   // ---------- Output generation ----------
+  // The effective value for a key: custom-edited text if set, else the original.
+  const effVal = (key, def) => customValues.has(key) ? customValues.get(key) : def;
+  // True when a key has any modification (edited text and/or EM tag).
+  const isModified = (key) => colors.has(key) || customValues.has(key);
   // Wrap a value in an EM emphasis tag when one is assigned.
   const wrapVal = (key, val, em) => em ? `${key}=<${em}>${val}</${em}>` : `${key}=${val}`;
   function generate(){
     const out = [];
     const fileKeys = new Set();
     if (outFormat==='full'){
-      // full file: tagged keys wrapped in <EMn>value</EMn>, rest unchanged
+      // full file: modified keys get their (possibly edited) value wrapped in <EMn>..</EMn>, rest unchanged
       for (const e of entries){
         if (!e.hasEq){ out.push(e.raw); continue; }
         fileKeys.add(e.key);
-        out.push(wrapVal(e.key, e.value, colors.get(e.key)));
+        if (isModified(e.key)) out.push(wrapVal(e.key, effVal(e.key, e.value), colors.get(e.key)));
+        else out.push(e.raw);
       }
-      // append tagged keys not present in the file (virtual known keys)
-      for (const [k,em] of colors){ if (!fileKeys.has(k) && knownValues.has(k)) out.push(wrapVal(k, knownValues.get(k), em)); }
+      // append modified keys not present in the file (virtual known keys)
+      for (const k of colors.keys()){ if (!fileKeys.has(k) && knownValues.has(k)) out.push(wrapVal(k, effVal(k, knownValues.get(k)), colors.get(k))); }
+      for (const k of customValues.keys()){ if (!fileKeys.has(k) && knownValues.has(k) && !colors.has(k)) out.push(wrapVal(k, customValues.get(k), '')); }
       return out.join('\r\n');
     }
-    // changes only: just the tagged keys (in-file + virtual)
-    for (const e of entries){ if (e.hasEq && colors.has(e.key)){ fileKeys.add(e.key); out.push(wrapVal(e.key, e.value, colors.get(e.key))); } }
-    for (const [k,em] of colors){ if (!fileKeys.has(k) && knownValues.has(k)) out.push(wrapVal(k, knownValues.get(k), em)); }
+    // changes only: just the modified keys (in-file + virtual), as key=value (wrapped if tagged)
+    for (const e of entries){ if (e.hasEq && isModified(e.key)){ fileKeys.add(e.key); out.push(wrapVal(e.key, effVal(e.key, e.value), colors.get(e.key))); } }
+    for (const k of colors.keys()){ if (!fileKeys.has(k) && knownValues.has(k)){ fileKeys.add(k); out.push(wrapVal(k, effVal(k, knownValues.get(k)), colors.get(k))); } }
+    for (const k of customValues.keys()){ if (!fileKeys.has(k) && knownValues.has(k) && !colors.has(k)) out.push(wrapVal(k, customValues.get(k), '')); }
     return out.join('\r\n');
   }
 
@@ -607,9 +620,8 @@
     const useGroup = selGroup !== null && catCounts;
     for (let i=0;i<centerList.length;i++){
       const e = centerList[i];
-      const colored = colors.has(e.key);
-      if (filterMode==='colored' && !colored) continue;
-      if (filterMode==='uncolored' && colored) continue;
+      if (filterMode==='colored' && !isModified(e.key)) continue;
+      if (filterMode==='uncolored' && isModified(e.key)) continue;
       if (useCat || useGroup){
         const c = categorizeKey(e.key);
         if (useCat && c !== selCat) continue;
@@ -642,18 +654,20 @@
     for (let i=start;i<end;i++){
       const e = centerList[filtered[i]];
       const em = colors.get(e.key) || '';
-      const empty = !em;
+      const edited = customValues.has(e.key);
+      const modified = em || edited;
       const dotBg = em ? EM_COLORS[em] : 'transparent';
-      const vtag = e.inFile ? '' : '<span class="vtag" title="Not in loaded file — appended to output if tagged">virtual</span>';
+      const vtag = e.inFile ? '' : '<span class="vtag" title="Not in loaded file — appended to output if modified">virtual</span>';
       const opts = EM_OPTIONS.map(o=>`<option value="${o.v}" ${o.v===em?'selected':''}>${o.label}</option>`).join('');
+      const v = effVal(e.key, e.value) || '';
       html += `<div class="row ${e.inFile?'':'virtual'}" style="top:${i*ROW_H}px" data-i="${filtered[i]}" data-key="${attr(e.key)}">
         <span class="idx">${i+1}</span>
         <span class="em-dot" style="background:${dotBg}" title="${em||'none'}"></span>
         <span class="key" title="${attr(e.key)}">${esc(trunc(e.key,44))}</span>
         ${vtag}
-        <span class="val" title="${attr(e.value||'')}">${esc(trunc(e.value||'',44))}</span>
+        <input class="val-input ${edited?'modified':''}" value="${attr(v)}" spellcheck="false" aria-label="value for ${attr(e.key)}" title="Edit the displayed text">
         <select class="em-sel" aria-label="EM tag for ${attr(e.key)}">${opts}</select>
-        <button class="clear-x" title="Clear tag" ${empty?'hidden':''} aria-label="clear"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+        <button class="clear-x" title="Reset tag and text to default" ${modified?'':'hidden'} aria-label="reset"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
       </div>`;
     }
     const range = document.createRange();
@@ -663,12 +677,29 @@
     while (tmp.firstChild) spacer.appendChild(tmp.firstChild);
   }
 
-  // ---------- EM tag change ----------
+  // ---------- Value / EM tag change ----------
   function setEM(key, em){
     if (em) colors.set(key, em);
     else colors.delete(key);
     markDirty();
   }
+  // original (unmodified) value for a visible row's key
+  const origVal = (idx) => (centerList[idx] ? centerList[idx].value : '');
+
+  // Edit the displayed text value
+  $('vscroll').addEventListener('input', ev=>{
+    const row = ev.target.closest('.row'); if (!row) return;
+    if (!ev.target.classList.contains('val-input')) return;
+    const key = row.dataset.key;
+    const idx = +row.dataset.i;
+    const val = ev.target.value;
+    if (val === origVal(idx)) customValues.delete(key);
+    else customValues.set(key, val);
+    const edited = customValues.has(key);
+    ev.target.classList.toggle('modified', edited);
+    row.querySelector('.clear-x').hidden = !(colors.has(key) || edited);
+    markDirty();
+  });
 
   $('vscroll').addEventListener('change', ev=>{
     const row = ev.target.closest('.row'); if (!row) return;
@@ -677,14 +708,19 @@
     const val = ev.target.value;
     setEM(key, val);
     row.querySelector('.em-dot').style.background = val ? EM_COLORS[val] : 'transparent';
-    row.querySelector('.clear-x').hidden = !val;
+    row.querySelector('.clear-x').hidden = !(val || customValues.has(key));
   });
+  // Reset button: clear EM tag AND restore original text
   $('vscroll').addEventListener('click', ev=>{
     const x = ev.target.closest('.clear-x'); if (!x) return;
-    const row = x.closest('.row'); const key = row.dataset.key;
+    const row = x.closest('.row'); const key = row.dataset.key; const idx = +row.dataset.i;
     colors.delete(key);
+    customValues.delete(key);
     row.querySelector('.em-sel').value = '';
     row.querySelector('.em-dot').style.background = 'transparent';
+    const inp = row.querySelector('.val-input');
+    inp.value = origVal(idx);
+    inp.classList.remove('modified');
     row.querySelector('.clear-x').hidden = true;
     markDirty();
   });
@@ -716,7 +752,7 @@
     paintRows(); markDirty();
   });
   $('clearBtn').addEventListener('click', ()=>{
-    eachVisible(k=>colors.delete(k));
+    eachVisible(k=>{ colors.delete(k); customValues.delete(k); });
     paintRows(); markDirty();
   });
 
@@ -734,13 +770,13 @@
     });
   });
   function updateFmtHint(){
-    $('fmtHint').innerHTML = outFormat==='full' ? 'Full file — tagged keys wrapped in <code>&lt;EMn&gt;value&lt;/EMn&gt;</code>; tagged keys not in your file are appended.'
-      : 'Only the keys you tagged (in-file + virtual), wrapped in <code>&lt;EMn&gt;...&lt;/EMn&gt;</code>.';
+    $('fmtHint').innerHTML = outFormat==='full' ? 'Full file — modified keys use your edited text, wrapped in <code>&lt;EMn&gt;value&lt;/EMn&gt;</code> when tagged; modified keys not in your file are appended.'
+      : 'Only the keys you modified (tagged and/or text-edited), in-file + virtual.';
   }
   function updateStats(){
-    let colored=0; colors.forEach(()=>colored++);
+    const modified = new Set([...colors.keys(), ...customValues.keys()]).size;
     $('stKeys').textContent = entries.filter(e=>e.hasEq).length.toLocaleString();
-    $('stColored').textContent = colored;
+    $('stColored').textContent = modified;
     $('stShown').textContent = filtered.length;
   }
 
