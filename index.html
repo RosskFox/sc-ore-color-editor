@@ -298,7 +298,7 @@
       <div class="toolbar">
         <label class="search">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-          <input type="search" id="search" placeholder="Filter keys or values…" disabled />
+          <input type="search" id="search" placeholder="Filter keys or values… (* = wildcard)" disabled />
         </label>
         <span class="sep"></span>
         <button class="mini-btn" id="autoBtn" disabled title="Distinct hue per visible key">Auto-color</button>
@@ -652,6 +652,12 @@
   // ---------- Filtering ----------
   function applyFilter(){
     const q = $('search').value.trim().toLowerCase();
+    // Wildcard support: '*' matches any run of characters
+    let qRe = null;
+    if (q && q.indexOf('*') !== -1){
+      const esc = q.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*');
+      try { qRe = new RegExp(esc, 'i'); } catch(_) { qRe = null; }
+    }
     filtered = [];
     const useCat = selCat !== null && catCounts;
     const useGroup = selGroup !== null && catCounts;
@@ -664,10 +670,14 @@
         if (useCat && c !== selCat) continue;
         else if (!useCat && useGroup && !c.startsWith(selGroup+':')) continue;
       }
-      if (q){ if (e.key.toLowerCase().indexOf(q)===-1 && (e.value||'').toLowerCase().indexOf(q)===-1) continue; }
+      if (q){
+        if (qRe){ if (!qRe.test(e.key) && !qRe.test(e.value||'')) continue; }
+        else if (e.key.toLowerCase().indexOf(q)===-1 && (e.value||'').toLowerCase().indexOf(q)===-1) continue;
+      }
       filtered.push(i);
     }
     $('centerCount').textContent = centerList.length ? `${filtered.length.toLocaleString()} / ${editableCount.toLocaleString()}` : '—';
+    $('stShown').textContent = filtered.length;
     $('emptyState').hidden = filtered.length>0 || centerList.length===0;
     $('listWrap').style.display = $('emptyState').hidden ? '' : 'none';
     $('vscroll').scrollTop = 0;
