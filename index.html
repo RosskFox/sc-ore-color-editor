@@ -143,8 +143,16 @@
   .cat-sub .chip { padding:2px var(--space-2); font-size:11px; }
   .cat-sub .chip .cnt { color:var(--text-faint); margin-left:4px; font-size:10px; }
 
-  .list-wrap { flex:1; min-height:0; overflow:hidden; position:relative; }
-  .vscroll { height:100%; overflow-y:auto; overflow-anchor:none; }
+  .list-wrap { flex:1; min-height:0; overflow:hidden; position:relative; display:flex; flex-direction:column; }
+  .col-head { display:flex; align-items:center; gap:var(--space-3); padding:var(--space-1) var(--space-4); border-bottom:1px solid var(--border); background:var(--surface-2); position:sticky; top:0; z-index:5; flex:none; }
+  .col-head .h { font-size:10px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-faint); white-space:nowrap; overflow:hidden; }
+  .col-head .h.idx { min-width:3.5em; text-align:right; }
+  .col-head .h.em { width:18px; text-align:center; }
+  .col-head .h.key { flex:1; min-width:0; }
+  .col-head .h.val { flex:1.3; min-width:0; }
+  .col-head .h.emtag { width:118px; }
+  .col-head .h.clear { width:22px; }
+  .vscroll { flex:1; min-height:0; overflow-y:auto; overflow-anchor:none; }
   .vspacer { position:relative; width:100%; }
   .row { position:absolute; left:0; right:0; display:flex; align-items:center; gap:var(--space-3); padding:var(--space-2) var(--space-4); border-bottom:1px solid var(--border-soft); }
   .row:nth-child(even) { background:var(--row-stripe); }
@@ -306,7 +314,15 @@
         <select class="cat-select" id="catGroup" disabled><option>—</option></select>
       </div>
       <div class="cat-sub" id="catSub"></div>
-      <div class="list-wrap">
+      <div class="list-wrap" id="listWrap">
+        <div class="col-head">
+          <span class="h idx">#</span>
+          <span class="h em" title="Assigned color">●</span>
+          <span class="h key">Key</span>
+          <span class="h val">Value (editable)</span>
+          <span class="h emtag">EM Tag</span>
+          <span class="h clear" aria-hidden="true"></span>
+        </div>
         <div class="vscroll" id="vscroll"><div class="vspacer" id="vspacer"></div></div>
       </div>
       <div class="empty-state" id="emptyState">
@@ -557,6 +573,7 @@
     buildCenterList();
     $('dropzone').hidden = true;
     $('emptyState').hidden = centerList.length>0 || entries.length>0;
+    $('listWrap').style.display = $('emptyState').hidden ? '' : 'none';
     renderLoadedCard(name, text, imp);
     $('srcCount').textContent = entries.filter(e=>e.hasEq).length.toLocaleString()+' keys';
     $('search').disabled = false;
@@ -652,6 +669,7 @@
     }
     $('centerCount').textContent = centerList.length ? `${filtered.length.toLocaleString()} / ${editableCount.toLocaleString()}` : '—';
     $('emptyState').hidden = filtered.length>0 || centerList.length===0;
+    $('listWrap').style.display = $('emptyState').hidden ? '' : 'none';
     $('vscroll').scrollTop = 0;
     layoutList();
   }
