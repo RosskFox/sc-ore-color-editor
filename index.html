@@ -25,22 +25,24 @@
     --font-mono: 'JetBrains Mono','SFMono-Regular',ui-monospace,monospace;
   }
   [data-theme='dark'] {
-    --bg: #14110d; --surface: #1b1712; --surface-2: #221d16; --surface-3: #2a2319;
-    --border: #393128; --border-soft: #2c261d;
-    --text: #ece4d8; --text-muted: #9d9387; --text-faint: #6b6358;
-    --accent: #d4843a; --accent-hover: #e69648; --accent-soft: rgba(212,132,58,0.14);
-    --danger: #d16353; --success: #6daa45; --row-stripe: rgba(255,255,255,0.015);
-    --chip-ship: #4a90c2; --chip-hand: #d4843a; --chip-ground: #8a9a3a;
-    --chip-harvest: #4f9a5a; --chip-creature: #c25656; --chip-rare: #e0b43a; --chip-pyro: #e0552a;
+    --bg: #000000; --surface: #0a0a0a; --surface-2: #141414; --surface-3: #1c1c1c;
+    --border: #2a2a2a; --border-soft: #1f1f1f;
+    --text: #f2f2f2; --text-muted: #9a9a9a; --text-faint: #6a6a6a;
+    --accent: #2bb3b3; --accent-hover: #3fc7c7; --accent-soft: rgba(43,179,179,0.16);
+    --on-accent: #001515;
+    --danger: #e06464; --success: #5fb84a; --row-stripe: rgba(255,255,255,0.02);
+    --chip-ship: #5aa9e0; --chip-hand: #e09a3f; --chip-ground: #a9b84a;
+    --chip-harvest: #5fcd6e; --chip-creature: #e0646a; --chip-rare: #e8c14a; --chip-pyro: #e8552a;
   }
   [data-theme='light'] {
-    --bg: #f5f1ea; --surface: #fbf8f2; --surface-2: #f1ebe1; --surface-3: #e9e1d4;
-    --border: #d8cdbb; --border-soft: #e3d9c9;
-    --text: #2a241b; --text-muted: #7a7166; --text-faint: #a99e90;
-    --accent: #b5641e; --accent-hover: #9c5419; --accent-soft: rgba(181,100,30,0.12);
-    --danger: #b5453a; --success: #4f8a28; --row-stripe: rgba(0,0,0,0.018);
+    --bg: #ffffff; --surface: #ffffff; --surface-2: #f5f5f5; --surface-3: #ededed;
+    --border: #d8d8d8; --border-soft: #e8e8e8;
+    --text: #1a1a1a; --text-muted: #6a6a6a; --text-faint: #a0a0a0;
+    --accent: #0e8a8a; --accent-hover: #0a6e6e; --accent-soft: rgba(14,138,138,0.12);
+    --on-accent: #ffffff;
+    --danger: #c64545; --success: #3f8a28; --row-stripe: rgba(0,0,0,0.02);
     --chip-ship: #2f6fa3; --chip-hand: #b5641e; --chip-ground: #6b7a2a;
-    --chip-harvest: #357a42; --chip-creature: #a8443f; --chip-rare: #b58a1a; --chip-pyro: #c44520;
+    --chip-harvest: #2f8a3f; --chip-creature: #a8443f; --chip-rare: #9c7510; --chip-pyro: #c44520;
   }
   *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
   html { -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
@@ -55,7 +57,7 @@
   .logo { width:34px; height:34px; flex:none; color:var(--accent); }
   .brand h1 { font-size:var(--text-lg); font-weight:700; letter-spacing:-0.01em; line-height:1; }
   .brand .sub { font-size:var(--text-xs); color:var(--text-muted); font-family:var(--font-mono); margin-top:2px; }
-  .file-btn { display:inline-flex; align-items:center; gap:var(--space-2); padding:var(--space-2) var(--space-4); background:var(--accent); color:#1a120a; font-weight:700; font-size:var(--text-sm); border-radius:var(--radius-md); box-shadow:0 1px 2px rgba(0,0,0,0.25); }
+  .file-btn { display:inline-flex; align-items:center; gap:var(--space-2); padding:var(--space-2) var(--space-4); background:var(--accent); color:var(--on-accent); font-weight:700; font-size:var(--text-sm); border-radius:var(--radius-md); box-shadow:0 1px 2px rgba(0,0,0,0.25); }
   .file-btn:hover { background:var(--accent-hover); }
   .file-btn.ghost { background:transparent; color:var(--text); border:1px solid var(--border); box-shadow:none; }
   .file-btn.ghost:hover { background:var(--surface-2); border-color:var(--accent); }
@@ -100,8 +102,8 @@
   .mini-btn { padding:var(--space-2) var(--space-3); font-size:var(--text-xs); font-weight:500; border:1px solid var(--border); border-radius:var(--radius-md); color:var(--text-muted); background:var(--surface-3); white-space:nowrap; display:inline-flex; align-items:center; gap:var(--space-1); }
   .mini-btn:hover { color:var(--text); border-color:var(--accent); }
   .mini-btn.danger:hover { color:var(--danger); border-color:var(--danger); }
-  .mini-btn.primary { background:var(--accent); color:#1a120a; border-color:var(--accent); font-weight:700; }
-  .mini-btn.primary:hover { background:var(--accent-hover); border-color:var(--accent-hover); color:#1a120a; }
+  .mini-btn.primary { background:var(--accent); color:var(--on-accent); border-color:var(--accent); font-weight:700; }
+  .mini-btn.primary:hover { background:var(--accent-hover); border-color:var(--accent-hover); color:var(--on-accent); }
 
   .filter-chips { display:flex; gap:var(--space-2); padding:var(--space-2) var(--space-3); flex-wrap:wrap; border-bottom:1px solid var(--border-soft); }
   .chip { padding:var(--space-1) var(--space-3); font-size:var(--text-xs); border:1px solid var(--border); border-radius:var(--radius-full); color:var(--text-muted); background:var(--surface-3); display:inline-flex; align-items:center; gap:var(--space-1); }
@@ -141,7 +143,7 @@
   .seg button { padding:var(--space-2) var(--space-3); font-size:var(--text-xs); color:var(--text-muted); border-right:1px solid var(--border); }
   .seg button:last-child { border-right:none; }
   .seg button.active { background:var(--accent-soft); color:var(--accent); }
-  .copy-btn { padding:var(--space-2) var(--space-4); font-size:var(--text-sm); font-weight:700; background:var(--accent); color:#1a120a; border-radius:var(--radius-md); display:inline-flex; align-items:center; gap:var(--space-2); }
+  .copy-btn { padding:var(--space-2) var(--space-4); font-size:var(--text-sm); font-weight:700; background:var(--accent); color:var(--on-accent); border-radius:var(--radius-md); display:inline-flex; align-items:center; gap:var(--space-2); }
   .copy-btn:hover { background:var(--accent-hover); }
   .copy-btn.done { background:var(--success); }
   .dl-btn { padding:var(--space-2) var(--space-3); font-size:var(--text-xs); border:1px solid var(--border); border-radius:var(--radius-md); color:var(--text-muted); display:inline-flex; align-items:center; gap:var(--space-1); }
@@ -327,14 +329,14 @@
 
   // type classification -> badge class + default color
   function typeClass(t){
-    if (t.includes("Pyro Only")) return {cls:"t-pyro", def:"#e0552a"};
-    if (t.includes("Rare")) return {cls:"t-rare", def:"#e0b43a"};
-    if (t.includes("Ship")) return {cls:"t-ship", def:"#4a90c2"};
-    if (t.includes("Hand")) return {cls:"t-hand", def:"#d4843a"};
-    if (t.includes("Ground")) return {cls:"t-ground", def:"#8a9a3a"};
-    if (t.includes("Harvestable")) return {cls:"t-harvest", def:"#4f9a5a"};
-    if (t.includes("Creature")) return {cls:"t-creature", def:"#c25656"};
-    return {cls:"", def:"#9d9387"};
+    if (t.includes("Pyro Only")) return {cls:"t-pyro", def:"#e8552a"};
+    if (t.includes("Rare")) return {cls:"t-rare", def:"#e8c14a"};
+    if (t.includes("Ship")) return {cls:"t-ship", def:"#5aa9e0"};
+    if (t.includes("Hand")) return {cls:"t-hand", def:"#e09a3f"};
+    if (t.includes("Ground")) return {cls:"t-ground", def:"#a9b84a"};
+    if (t.includes("Harvestable")) return {cls:"t-harvest", def:"#5fcd6e"};
+    if (t.includes("Creature")) return {cls:"t-creature", def:"#e0646a"};
+    return {cls:"", def:"#9a9a9a"};
   }
   const TYPE_CATS = [
     {label:"All", match:null, dot:null},
@@ -428,7 +430,7 @@
         <span class="type-badge ${tc.cls}">${esc(shortType(o.t))}</span>
         <label class="swatch ${empty?'empty':''}">
           <span class="fill" style="background:${c}"></span>
-          <input type="color" value="${c||'#d4843a'}" aria-label="color for ${attr(o.n)}">
+          <input type="color" value="${c||'#2bb3b3'}" aria-label="color for ${attr(o.n)}">
         </label>
         <span class="key" title="${attr(o.n)} — ${attr(o.l)}">${esc(o.n)}</span>
         <span class="loc" title="${attr(o.l)}">${esc(trunc(o.l,42))}</span>
