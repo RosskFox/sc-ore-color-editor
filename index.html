@@ -354,8 +354,8 @@
   let srcLines = [];
   let srcName = '';
 
-  // seed defaults
-  ORES.forEach(o => { defaults.set(o.n, typeClass(o.t).def); colors.set(o.n, typeClass(o.t).def); });
+  // seed defaults — white until the input ini supplies real colors
+  ORES.forEach(o => { defaults.set(o.n, '#FFFFFF'); colors.set(o.n, '#FFFFFF'); });
 
   // ---------- Theme ----------
   (function(){
@@ -601,17 +601,51 @@
     e.preventDefault(); const f=e.dataTransfer.files[0]; if(!f) return;
     const r=new FileReader(); r.onload=()=>loadSource(String(r.result), f.name); r.readAsText(f);
   });
+  // Extract ore colors from ini lines. Supports formats:
+  //   OreName=#RRGGBB          OreName=#RGB
+  //   OreName=Color=#RRGGBB    OreName_Color=#RRGGBB
+  //   [OreColors] sections are tolerated (any line matching above counts)
+  function extractColors(lines){
+    const out = new Map();
+    const oreByName = new Map(ORES.map(o=>[o.n.toLowerCase(), o.n]));
+    const hexRe = /#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b/;
+    for (const raw of lines){
+      const eq = raw.indexOf('=');
+      if (eq === -1) continue;
+      let key = raw.slice(0, eq).trim();
+      const val = raw.slice(eq+1).trim();
+      const hm = val.match(hexRe);
+      if (!hm) continue;
+      const hex = normalizeHex(hm[1]);
+      if (!hex) continue;
+      // strip common suffixes like _Color / _Colour
+      key = key.replace(/_?colou?r$/i, '').trim();
+      const match = oreByName.get(key.toLowerCase());
+      if (match) out.set(match, hex);
+    }
+    return out;
+  }
+  function applyDefaultsFromIni(map){
+    // imported colors become the new defaults (reset target) and current colors
+    if (!map.size) return 0;
+    map.forEach((hex, name)=>{ defaults.set(name, hex); colors.set(name, hex); });
+    return map.size;
+  }
   function loadSource(text, name){
     srcName = name.replace(/\.[^.]+$/,'');
     srcLines = text.replace(/^\uFEFF/,'').split(/\r\n|\r|\n/);
     if (srcLines.length && srcLines[srcLines.length-1]==='') srcLines.pop();
+    // auto-import: defaults align with the input ini
+    const imported = applyDefaultsFromIni(extractColors(srcLines));
     $('dropzone').hidden = true;
     $('fileMeta').hidden = false;
     $('rawView').hidden = false;
-    $('fileMeta').innerHTML = `<span><b>${esc(name)}</b></span><span>${srcLines.length.toLocaleString()} lines</span><span>${(text.length/1024).toFixed(0)} KB</span>`;
+    $('fileMeta').innerHTML = `<span><b>${esc(name)}</b></span><span>${srcLines.length.toLocaleString()} lines</span><span>${(text.length/1024).toFixed(0)} KB</span>` + (imported? `<span class="" style="color:var(--accent)">${imported} colors imported</span>` : '');
     $('srcCount').textContent = name;
     renderRawView();
-    if (outFormat==='append') scheduleGenerate();
+    paintRows();
+    scheduleGenerate();
+    if (imported) toast(`Defaults aligned to ${name} — ${imported} ore colors`);
   }
   function renderRawView(){
     const view = $('rawView'); view.innerHTML='';
@@ -645,18 +679,9 @@
   }
   $('importBtn').addEventListener('click', ()=>{
     if (!srcLines.length){ toast('Open an INI first'); return; }
-    const re = /^\s*([^=\s][^=]*?)\s*=\s*(#[0-9a-fA-F]{6}|#[0-9a-fA-F]{3})\s*$/;
-    let count=0;
-    srcLines.forEach(l=>{
-      const m = l.match(re); if (!m) return;
-      const name = m[1].trim();
-      const hex = normalizeHex(m[2]);
-      // match against ore names (exact, case-insensitive)
-      const ore = ORES.find(o=>o.n.toLowerCase()===name.toLowerCase());
-      if (ore && hex){ colors.set(ore.n, hex); count++; }
-    });
+    const count = applyDefaultsFromIni(extractColors(srcLines));
     paintRows(); markDirty();
-    toast(count ? `Imported ${count} colors` : 'No matching OreName=#hex lines found');
+    toast(count ? `Aligned defaults — ${count} ore colors from ini` : 'No matching OreName=#hex lines found');
   });
 
   // ---------- utils ----------
