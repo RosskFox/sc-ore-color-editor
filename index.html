@@ -135,6 +135,9 @@
   .swatch { position:relative; width:34px; height:34px; flex:none; border-radius:var(--radius-sm); border:1px solid var(--border); cursor:pointer; overflow:hidden; background:linear-gradient(45deg, var(--surface-3) 25%, transparent 25%) 0 0/10px 10px, linear-gradient(-45deg, var(--surface-3) 25%, transparent 25%) 0 5px/10px 10px; }
   .swatch input[type=color] { position:absolute; inset:-2px; width:calc(100% + 4px); height:calc(100% + 4px); border:none; padding:0; cursor:pointer; opacity:0; }
   .swatch .fill { position:absolute; inset:0; }
+  .em-dot { width:18px; height:18px; flex:none; border-radius:var(--radius-sm); border:1px solid var(--border); background:transparent; transition:background var(--transition); }
+  .em-sel { width:92px; flex:none; font-family:var(--font-mono); font-size:11px; font-weight:600; padding:var(--space-1) var(--space-2); background:var(--surface-3); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text); cursor:pointer; }
+  .em-sel:focus { border-color:var(--accent); outline:none; }
   .row .key { font-family:var(--font-mono); font-size:12.5px; font-weight:600; color:var(--text); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .row .val { font-family:var(--font-mono); font-size:11px; color:var(--text-faint); flex:1.3; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .hex { width:78px; flex:none; font-family:var(--font-mono); font-size:11px; padding:var(--space-1) var(--space-2); background:var(--surface-3); border:1px solid var(--border); border-radius:var(--radius-sm); text-align:center; text-transform:uppercase; }
@@ -189,7 +192,7 @@
   </div>
   <div class="stats" id="stats">
     <span><b id="stKeys">0</b> keys</span>
-    <span><b id="stColored">0</b> colored</span>
+    <span><b id="stColored">0</b> tagged</span>
     <span><b id="stShown">0</b> shown</span>
   </div>
   <input type="file" id="fileInput" accept=".ini,.txt,.cfg,.conf,text/plain" hidden />
@@ -265,8 +268,8 @@
       </div>
       <div class="filter-chips">
         <button class="chip active" data-filter="all">All</button>
-        <button class="chip" data-filter="colored">Colored</button>
-        <button class="chip" data-filter="uncolored">Uncolored</button>
+        <button class="chip" data-filter="colored">Tagged</button>
+        <button class="chip" data-filter="uncolored">Untagged</button>
       </div>
       <div class="cat-bar">
         <span class="label">Category</span>
@@ -303,7 +306,7 @@
       <span id="fmtHint"></span>
       <span class="out-stale" id="staleTag" hidden>● stale</span>
     </div>
-    <textarea class="output" id="output" spellcheck="false" placeholder="Load an ini and assign colors — the modified ini (real keys only) appears here."></textarea>
+    <textarea class="output" id="output" spellcheck="false" placeholder="Load an ini and assign EM tags. The modified output appears here."></textarea>
   </section>
 
 </main>
@@ -320,9 +323,16 @@
   let centerList = [];     // {key, value, inFile} — editable keys shown in center (file + virtual known)
   let filtered = [];      // indices into centerList
   let knownValues = new Map(); // key -> default value, from known-keys.ini (all 89k)
-  let colors = new Map(); // key -> #RRGGBB  (only explicitly colored keys)
+  let colors = new Map(); // key -> EM tag string ('EM0'..'EM5'); only explicitly tagged keys
   let filterMode = 'all';
   const HIDE_DESC = true;   // permanently hide keys containing '_desc' (description text)
+  // Star Citizen localization emphasis tags. The in-game color of each EM tag is
+  // defined in the game's compiled UI styles, not in global.ini. The preview
+  // colors below are best-effort placeholders for the swatch ONLY — verify in-game.
+  const EM_TAGS = ['EM0','EM1','EM2','EM3','EM4','EM5'];
+  const EM_COLORS = { EM0:'#9aa0a6', EM1:'#22d3ee', EM2:'#22c55e', EM3:'#eab308', EM4:'#ef4444', EM5:'#d946ef' };
+  const EM_OPTIONS = [{v:'',label:'— none —'}, ...EM_TAGS.map(t=>({v:t,label:t}))];
+  const EM_WRAP_RE = /^<(EM\d)>([\s\S]*)<\/EM\d>$/;   // detects a value fully wrapped in one EM tag
   let outFormat = 'full';
   let dirty = false, renderPending = false, idleGen;
   let generatedText = '';   // true CRLF string (textarea .value normalizes to LF)
@@ -500,7 +510,7 @@
     parse(text);
     srcName = name.replace(/\.[^.]+$/, '') || 'source';
     srcText = text;
-    // auto-import: any existing Key=#hex lines become the assigned colors
+    // auto-import: any existing <EMn>...</EMn> wrappers become the assigned tags
     const imp = importColorsFromEntries();
     buildCenterList();
     $('dropzone').hidden = true;
@@ -516,7 +526,7 @@
     applyFilter();
     scheduleGenerate();
     updateStats();
-    if (imp) toast(`Parsed ${entries.filter(e=>e.hasEq).length.toLocaleString()} keys — ${imp} colors imported`);
+    if (imp) toast(`Parsed ${entries.filter(e=>e.hasEq).length.toLocaleString()} keys — ${imp} EM tags imported`);
   }
 
   function renderLoadedCard(name, text, imp){
@@ -533,7 +543,7 @@
         <div class="stat"><span class="k">Lines</span><span class="v">${lines.toLocaleString()}</span></div>
         <div class="stat"><span class="k">Keys</span><span class="v">${keys.toLocaleString()}</span></div>
         <div class="stat"><span class="k">Size</span><span class="v">${kb} KB</span></div>
-        <div class="stat"><span class="k">Colors</span><span class="v">${imp? imp.toLocaleString() : '0 imported'}</span></div>
+        <div class="stat"><span class="k">EM tags</span><span class="v">${imp? imp.toLocaleString() : '0 imported'}</span></div>
       </div>`;
   }
 
@@ -541,31 +551,32 @@
     let n=0;
     for (const e of entries){
       if (!e.hasEq) continue;
-      const m = e.value.match(/^(#([0-9a-fA-F]{6}|[0-9a-fA-F]{3}))$/);
-      if (m){ colors.set(e.key, normalizeHex(m[1])); n++; }
+      const m = e.value.match(EM_WRAP_RE);
+      if (m){ colors.set(e.key, m[1]); e.value = m[2]; n++; }   // strip wrapper, store tag
     }
     return n;
   }
 
   // ---------- Output generation ----------
+  // Wrap a value in an EM emphasis tag when one is assigned.
+  const wrapVal = (key, val, em) => em ? `${key}=<${em}>${val}</${em}>` : `${key}=${val}`;
   function generate(){
     const out = [];
     const fileKeys = new Set();
     if (outFormat==='full'){
-      // full file: colored real keys set to key=#hex, rest unchanged
+      // full file: tagged keys wrapped in <EMn>value</EMn>, rest unchanged
       for (const e of entries){
         if (!e.hasEq){ out.push(e.raw); continue; }
         fileKeys.add(e.key);
-        const c = colors.get(e.key);
-        out.push(c != null ? `${e.key}=${c}` : e.raw);
+        out.push(wrapVal(e.key, e.value, colors.get(e.key)));
       }
-      // append colored keys not present in the file (virtual known keys)
-      for (const [k,c] of colors){ if (!fileKeys.has(k) && knownValues.has(k)) out.push(`${k}=${c}`); }
+      // append tagged keys not present in the file (virtual known keys)
+      for (const [k,em] of colors){ if (!fileKeys.has(k) && knownValues.has(k)) out.push(wrapVal(k, knownValues.get(k), em)); }
       return out.join('\r\n');
     }
-    // changes only: just the colored keys (in-file + virtual)
-    for (const e of entries){ if (e.hasEq && colors.has(e.key)){ fileKeys.add(e.key); out.push(`${e.key}=${colors.get(e.key)}`); } }
-    for (const [k,c] of colors){ if (!fileKeys.has(k) && knownValues.has(k)) out.push(`${k}=${c}`); }
+    // changes only: just the tagged keys (in-file + virtual)
+    for (const e of entries){ if (e.hasEq && colors.has(e.key)){ fileKeys.add(e.key); out.push(wrapVal(e.key, e.value, colors.get(e.key))); } }
+    for (const [k,em] of colors){ if (!fileKeys.has(k) && knownValues.has(k)) out.push(wrapVal(k, knownValues.get(k), em)); }
     return out.join('\r\n');
   }
 
@@ -611,20 +622,19 @@
     let html='';
     for (let i=start;i<end;i++){
       const e = centerList[filtered[i]];
-      const c = colors.get(e.key) || '';
-      const empty = !c;
-      const vtag = e.inFile ? '' : '<span class="vtag" title="Not in loaded file — appended to output if colored">virtual</span>';
+      const em = colors.get(e.key) || '';
+      const empty = !em;
+      const dotBg = em ? EM_COLORS[em] : 'transparent';
+      const vtag = e.inFile ? '' : '<span class="vtag" title="Not in loaded file — appended to output if tagged">virtual</span>';
+      const opts = EM_OPTIONS.map(o=>`<option value="${o.v}" ${o.v===em?'selected':''}>${o.label}</option>`).join('');
       html += `<div class="row ${e.inFile?'':'virtual'}" style="top:${i*ROW_H}px" data-i="${filtered[i]}" data-key="${attr(e.key)}">
         <span class="idx">${i+1}</span>
-        <label class="swatch ${empty?'empty':''}">
-          <span class="fill" style="background:${c}"></span>
-          <input type="color" value="${c||'#ffffff'}" aria-label="color for ${attr(e.key)}">
-        </label>
+        <span class="em-dot" style="background:${dotBg}" title="${em||'none'}"></span>
         <span class="key" title="${attr(e.key)}">${esc(trunc(e.key,44))}</span>
         ${vtag}
         <span class="val" title="${attr(e.value||'')}">${esc(trunc(e.value||'',44))}</span>
-        <input class="hex" value="${c||''}" placeholder="—" spellcheck="false">
-        <button class="clear-x" title="Clear color" ${empty?'hidden':''} aria-label="clear"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+        <select class="em-sel" aria-label="EM tag for ${attr(e.key)}">${opts}</select>
+        <button class="clear-x" title="Clear tag" ${empty?'hidden':''} aria-label="clear"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
       </div>`;
     }
     const range = document.createRange();
@@ -634,53 +644,28 @@
     while (tmp.firstChild) spacer.appendChild(tmp.firstChild);
   }
 
-  // ---------- Color change ----------
-  function setColor(key, hex){
-    hex = normalizeHex(hex);
-    if (hex) colors.set(key, hex);
+  // ---------- EM tag change ----------
+  function setEM(key, em){
+    if (em) colors.set(key, em);
     else colors.delete(key);
     markDirty();
   }
-  function normalizeHex(v){
-    if (!v) return null;
-    v = String(v).trim();
-    if (v[0] !== '#') v = '#'+v;
-    if (/^#[0-9a-fA-F]{3}$/.test(v)){ v = '#'+v[1]+v[1]+v[2]+v[2]+v[3]+v[3]; }
-    if (!/^#[0-9a-fA-F]{6}$/.test(v)) return null;
-    return v.toUpperCase();
-  }
 
-  $('vscroll').addEventListener('input', ev=>{
-    const row = ev.target.closest('.row'); if (!row) return;
-    const key = row.dataset.key;
-    if (ev.target.type==='color'){
-      setColor(key, ev.target.value);
-      const sw = row.querySelector('.swatch'); sw.classList.remove('empty');
-      sw.querySelector('.fill').style.background = ev.target.value;
-      row.querySelector('.hex').value = ev.target.value.toUpperCase();
-      row.querySelector('.clear-x').hidden = false;
-    }
-  });
   $('vscroll').addEventListener('change', ev=>{
     const row = ev.target.closest('.row'); if (!row) return;
+    if (!ev.target.classList.contains('em-sel')) return;
     const key = row.dataset.key;
-    if (ev.target.classList.contains('hex')){
-      const n = normalizeHex(ev.target.value);
-      if (n){ setColor(key, n); ev.target.value = n;
-        row.querySelector('.swatch').classList.remove('empty');
-        row.querySelector('.swatch .fill').style.background = n;
-        row.querySelector('input[type=color]').value = n;
-        row.querySelector('.clear-x').hidden = false;
-      } else { ev.target.value = colors.get(key)||''; }
-    }
+    const val = ev.target.value;
+    setEM(key, val);
+    row.querySelector('.em-dot').style.background = val ? EM_COLORS[val] : 'transparent';
+    row.querySelector('.clear-x').hidden = !val;
   });
   $('vscroll').addEventListener('click', ev=>{
     const x = ev.target.closest('.clear-x'); if (!x) return;
     const row = x.closest('.row'); const key = row.dataset.key;
     colors.delete(key);
-    row.querySelector('.swatch').classList.add('empty');
-    row.querySelector('.swatch .fill').style.background = '';
-    row.querySelector('.hex').value = '';
+    row.querySelector('.em-sel').value = '';
+    row.querySelector('.em-dot').style.background = 'transparent';
     row.querySelector('.clear-x').hidden = true;
     markDirty();
   });
@@ -698,25 +683,21 @@
 
   // ---------- Bulk ----------
   function eachVisible(fn){ filtered.forEach(i=>fn(centerList[i].key)); }
+  // Auto-tag: cycle EM1–EM5 across the visible keys
   $('autoBtn').addEventListener('click', ()=>{
-    const n = filtered.length; let i=0;
-    eachVisible(k=>{ colors.set(k, hslToHex(Math.round((i/Math.max(n,1))*360), 58, 54)); i++; });
+    let i=0;
+    eachVisible(k=>{ colors.set(k, EM_TAGS[1+(i%5)]); i++; });
     paintRows(); markDirty();
   });
+  // Randomize: assign a random EM1–EM5 tag to each visible key
   $('randBtn').addEventListener('click', ()=>{
-    eachVisible(k=>colors.set(k, hslToHex(Math.floor(Math.random()*360), 55+Math.random()*25, 45+Math.random()*18)));
+    eachVisible(k=>colors.set(k, EM_TAGS[1+Math.floor(Math.random()*5)]));
     paintRows(); markDirty();
   });
   $('clearBtn').addEventListener('click', ()=>{
     eachVisible(k=>colors.delete(k));
     paintRows(); markDirty();
   });
-  function hslToHex(h,s,l){
-    s/=100; l/=100; const k=n=>(n+h/30)%12;
-    const a=s*Math.min(l,1-l);
-    const f=n=>{const c=l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));return Math.round(255*c).toString(16).padStart(2,'0');};
-    return ('#'+f(0)+f(8)+f(4)).toUpperCase();
-  }
 
   // ---------- Output ----------
   function scheduleGenerate(){
@@ -732,8 +713,8 @@
     });
   });
   function updateFmtHint(){
-    $('fmtHint').innerHTML = outFormat==='full' ? 'Full file — colored keys set to <code>key=#hex</code>; colored keys not in your file are appended.'
-      : 'Only the keys you colored (in-file + virtual) as <code>key=#hex</code>.';
+    $('fmtHint').innerHTML = outFormat==='full' ? 'Full file — tagged keys wrapped in <code>&lt;EMn&gt;value&lt;/EMn&gt;</code>; tagged keys not in your file are appended.'
+      : 'Only the keys you tagged (in-file + virtual), wrapped in <code>&lt;EMn&gt;...&lt;/EMn&gt;</code>.';
   }
   function updateStats(){
     let colored=0; colors.forEach(()=>colored++);
@@ -821,14 +802,14 @@
     $('packMenu').hidden = true;
     loadPack(item.dataset.pack);
   });
-  // import colors button (re-parse existing =#hex lines in the current file)
+  // import button (re-parse existing <EMn> wrappers in the current file)
   const impBtn = $('importBtn');
   if (impBtn) impBtn.addEventListener('click', ()=>{
     if (!entries.length){ toast('Open an INI first'); return; }
     const n = importColorsFromEntries();
     paintRows(); markDirty();
     if (entries.length && srcText) renderLoadedCard(srcName||'source', srcText, n);
-    toast(n ? `Imported ${n} colors` : 'No Key=#hex lines found');
+    toast(n ? `Imported ${n} EM tags` : 'No <EM> wrappers found');
   });
 
   // ---------- Known keys (merged union of all packs — shipped locally) ----------
