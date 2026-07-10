@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Ore Color INI Editor</title>
+<title>Ore Color INI Editor — Star Citizen</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
@@ -24,296 +24,138 @@
     --font-body: 'Satoshi','Inter',system-ui,sans-serif;
     --font-mono: 'JetBrains Mono','SFMono-Regular',ui-monospace,monospace;
   }
-
-  /* Mining / ore themed palette — dark */
   [data-theme='dark'] {
-    --bg: #14110d;
-    --surface: #1b1712;
-    --surface-2: #221d16;
-    --surface-3: #2a2319;
-    --border: #393128;
-    --border-soft: #2c261d;
-    --text: #ece4d8;
-    --text-muted: #9d9387;
-    --text-faint: #6b6358;
-    --accent: #d4843a;
-    --accent-hover: #e69648;
-    --accent-soft: rgba(212,132,58,0.14);
-    --danger: #d16353;
-    --success: #6daa45;
-    --row-stripe: rgba(255,255,255,0.015);
+    --bg: #14110d; --surface: #1b1712; --surface-2: #221d16; --surface-3: #2a2319;
+    --border: #393128; --border-soft: #2c261d;
+    --text: #ece4d8; --text-muted: #9d9387; --text-faint: #6b6358;
+    --accent: #d4843a; --accent-hover: #e69648; --accent-soft: rgba(212,132,58,0.14);
+    --danger: #d16353; --success: #6daa45; --row-stripe: rgba(255,255,255,0.015);
+    --chip-ship: #4a90c2; --chip-hand: #d4843a; --chip-ground: #8a9a3a;
+    --chip-harvest: #4f9a5a; --chip-creature: #c25656; --chip-rare: #e0b43a; --chip-pyro: #e0552a;
   }
-  /* light */
   [data-theme='light'] {
-    --bg: #f5f1ea;
-    --surface: #fbf8f2;
-    --surface-2: #f1ebe1;
-    --surface-3: #e9e1d4;
-    --border: #d8cdbb;
-    --border-soft: #e3d9c9;
-    --text: #2a241b;
-    --text-muted: #7a7166;
-    --text-faint: #a99e90;
-    --accent: #b5641e;
-    --accent-hover: #9c5419;
-    --accent-soft: rgba(181,100,30,0.12);
-    --danger: #b5453a;
-    --success: #4f8a28;
-    --row-stripe: rgba(0,0,0,0.018);
+    --bg: #f5f1ea; --surface: #fbf8f2; --surface-2: #f1ebe1; --surface-3: #e9e1d4;
+    --border: #d8cdbb; --border-soft: #e3d9c9;
+    --text: #2a241b; --text-muted: #7a7166; --text-faint: #a99e90;
+    --accent: #b5641e; --accent-hover: #9c5419; --accent-soft: rgba(181,100,30,0.12);
+    --danger: #b5453a; --success: #4f8a28; --row-stripe: rgba(0,0,0,0.018);
+    --chip-ship: #2f6fa3; --chip-hand: #b5641e; --chip-ground: #6b7a2a;
+    --chip-harvest: #357a42; --chip-creature: #a8443f; --chip-rare: #b58a1a; --chip-pyro: #c44520;
   }
-
   *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
   html { -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
-  body {
-    min-height:100dvh; line-height:1.55;
-    font-family:var(--font-body); font-size:var(--text-base);
-    color:var(--text); background:var(--bg);
-    display:flex; flex-direction:column;
-  }
+  body { min-height:100dvh; line-height:1.55; font-family:var(--font-body); font-size:var(--text-base); color:var(--text); background:var(--bg); display:flex; flex-direction:column; }
   button { cursor:pointer; background:none; border:none; color:inherit; font:inherit; }
   input,textarea,select { font:inherit; color:inherit; }
   a,button,input,textarea,select { transition:color var(--transition),background var(--transition),border-color var(--transition),box-shadow var(--transition); }
   :focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:var(--radius-sm); }
 
-  /* ---------- Header ---------- */
-  .topbar {
-    display:flex; align-items:center; gap:var(--space-4);
-    padding:var(--space-3) var(--space-5);
-    background:var(--surface);
-    border-bottom:1px solid var(--border);
-    flex-wrap:wrap;
-  }
+  .topbar { display:flex; align-items:center; gap:var(--space-4); padding:var(--space-3) var(--space-5); background:var(--surface); border-bottom:1px solid var(--border); flex-wrap:wrap; }
   .brand { display:flex; align-items:center; gap:var(--space-3); margin-right:auto; }
   .logo { width:34px; height:34px; flex:none; color:var(--accent); }
   .brand h1 { font-size:var(--text-lg); font-weight:700; letter-spacing:-0.01em; line-height:1; }
   .brand .sub { font-size:var(--text-xs); color:var(--text-muted); font-family:var(--font-mono); margin-top:2px; }
-
-  .file-btn {
-    display:inline-flex; align-items:center; gap:var(--space-2);
-    padding:var(--space-2) var(--space-4);
-    background:var(--accent); color:#1a120a;
-    font-weight:700; font-size:var(--text-sm);
-    border-radius:var(--radius-md);
-    box-shadow:0 1px 2px rgba(0,0,0,0.25);
-  }
+  .file-btn { display:inline-flex; align-items:center; gap:var(--space-2); padding:var(--space-2) var(--space-4); background:var(--accent); color:#1a120a; font-weight:700; font-size:var(--text-sm); border-radius:var(--radius-md); box-shadow:0 1px 2px rgba(0,0,0,0.25); }
   .file-btn:hover { background:var(--accent-hover); }
   .file-btn.ghost { background:transparent; color:var(--text); border:1px solid var(--border); box-shadow:none; }
   .file-btn.ghost:hover { background:var(--surface-2); border-color:var(--accent); }
-
-  .icon-btn {
-    width:38px; height:38px; display:grid; place-items:center;
-    border:1px solid var(--border); border-radius:var(--radius-md);
-    color:var(--text-muted);
-  }
+  .icon-btn { width:38px; height:38px; display:grid; place-items:center; border:1px solid var(--border); border-radius:var(--radius-md); color:var(--text-muted); }
   .icon-btn:hover { color:var(--text); border-color:var(--accent); background:var(--surface-2); }
-
   .stats { display:flex; gap:var(--space-4); font-size:var(--text-xs); color:var(--text-muted); font-family:var(--font-mono); }
   .stats b { color:var(--text); font-weight:700; }
 
-  /* ---------- Layout ---------- */
-  .workspace {
-    flex:1; display:grid;
-    grid-template-columns: 1fr 1.15fr 1.15fr;
-    min-height:0;
-  }
-  .pane {
-    display:flex; flex-direction:column;
-    min-width:0; min-height:0;
-    background:var(--surface);
-    border-right:1px solid var(--border);
-  }
+  .workspace { flex:1; display:grid; grid-template-columns: 0.9fr 1.3fr 1.1fr; min-height:0; }
+  .pane { display:flex; flex-direction:column; min-width:0; min-height:0; background:var(--surface); border-right:1px solid var(--border); }
   .pane:last-child { border-right:none; }
-  .pane-head {
-    display:flex; align-items:center; gap:var(--space-3);
-    padding:var(--space-3) var(--space-4);
-    border-bottom:1px solid var(--border);
-    background:var(--surface-2);
-    flex-wrap:wrap;
-  }
+  .pane-head { display:flex; align-items:center; gap:var(--space-3); padding:var(--space-3) var(--space-4); border-bottom:1px solid var(--border); background:var(--surface-2); flex-wrap:wrap; }
   .pane-head h2 { font-size:var(--text-sm); font-weight:700; letter-spacing:0.04em; text-transform:uppercase; color:var(--text-muted); }
   .pane-head .count { font-family:var(--font-mono); font-size:var(--text-xs); color:var(--accent); margin-left:auto; }
   .pane-body { flex:1; min-height:0; overflow:hidden; display:flex; flex-direction:column; }
 
-  /* ---------- Left: file viewer ---------- */
-  .dropzone {
-    margin:var(--space-3); padding:var(--space-8) var(--space-4);
-    border:2px dashed var(--border); border-radius:var(--radius-lg);
-    text-align:center; color:var(--text-muted);
-    display:none;
-  }
-  .dropzone.show { display:block; }
+  /* Left */
+  .left-actions { padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--border-soft); display:flex; gap:var(--space-2); flex-wrap:wrap; }
+  .left-actions .mini-btn { flex:1; justify-content:center; }
+  .dropzone { margin:var(--space-3); padding:var(--space-8) var(--space-4); border:2px dashed var(--border); border-radius:var(--radius-lg); text-align:center; color:var(--text-muted); }
   .dropzone.drag { border-color:var(--accent); background:var(--accent-soft); color:var(--text); }
   .dropzone p { margin:var(--space-2) 0; }
   .dropzone .big { font-size:var(--text-base); color:var(--text); font-weight:500; }
-
-  .file-meta {
-    padding:var(--space-2) var(--space-4);
-    font-family:var(--font-mono); font-size:var(--text-xs);
-    color:var(--text-muted);
-    border-bottom:1px solid var(--border-soft);
-    display:flex; gap:var(--space-4); flex-wrap:wrap;
-  }
+  .file-meta { padding:var(--space-2) var(--space-4); font-family:var(--font-mono); font-size:var(--text-xs); color:var(--text-muted); border-bottom:1px solid var(--border-soft); display:flex; gap:var(--space-4); flex-wrap:wrap; }
   .file-meta b { color:var(--text); }
-
-  .raw-view {
-    flex:1; min-height:0; overflow:auto;
-    font-family:var(--font-mono); font-size:12.5px; line-height:1.5;
-    padding:var(--space-2) 0;
-    background:var(--surface);
-  }
-  .raw-line {
-    display:flex; gap:var(--space-3); padding:0 var(--space-4);
-    white-space:pre; border-left:2px solid transparent;
-  }
+  .raw-view { flex:1; min-height:0; overflow:auto; font-family:var(--font-mono); font-size:12px; line-height:1.5; padding:var(--space-2) 0; }
+  .raw-line { display:flex; gap:var(--space-3); padding:0 var(--space-4); white-space:pre; }
   .raw-line:hover { background:var(--row-stripe); }
   .raw-line .ln { color:var(--text-faint); user-select:none; text-align:right; min-width:3.5em; flex:none; }
   .raw-line .lc { color:var(--text-muted); }
   .raw-line .lhs { color:var(--accent); }
   .raw-line .eq { color:var(--text-faint); }
   .raw-line .rhs { color:var(--text); }
+  .raw-line .colordot { display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:4px; vertical-align:middle; border:1px solid var(--border); }
 
-  /* ---------- Center: color picker list ---------- */
-  .toolbar {
-    display:flex; align-items:center; gap:var(--space-2);
-    padding:var(--space-2) var(--space-3);
-    border-bottom:1px solid var(--border-soft);
-    flex-wrap:wrap;
-  }
-  .search {
-    flex:1; min-width:120px;
-    display:flex; align-items:center; gap:var(--space-2);
-    padding:var(--space-2) var(--space-3);
-    background:var(--surface-3); border:1px solid var(--border);
-    border-radius:var(--radius-md);
-  }
+  /* Center */
+  .toolbar { display:flex; align-items:center; gap:var(--space-2); padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--border-soft); flex-wrap:wrap; }
+  .search { flex:1; min-width:120px; display:flex; align-items:center; gap:var(--space-2); padding:var(--space-2) var(--space-3); background:var(--surface-3); border:1px solid var(--border); border-radius:var(--radius-md); }
   .search svg { flex:none; color:var(--text-faint); }
   .search input { flex:1; background:none; border:none; outline:none; font-size:var(--text-sm); }
   .search input::placeholder { color:var(--text-faint); }
-
-  .mini-btn {
-    padding:var(--space-2) var(--space-3);
-    font-size:var(--text-xs); font-weight:500;
-    border:1px solid var(--border); border-radius:var(--radius-md);
-    color:var(--text-muted); background:var(--surface-3);
-    white-space:nowrap;
-  }
+  .mini-btn { padding:var(--space-2) var(--space-3); font-size:var(--text-xs); font-weight:500; border:1px solid var(--border); border-radius:var(--radius-md); color:var(--text-muted); background:var(--surface-3); white-space:nowrap; display:inline-flex; align-items:center; gap:var(--space-1); }
   .mini-btn:hover { color:var(--text); border-color:var(--accent); }
   .mini-btn.danger:hover { color:var(--danger); border-color:var(--danger); }
+  .mini-btn.primary { background:var(--accent); color:#1a120a; border-color:var(--accent); font-weight:700; }
+  .mini-btn.primary:hover { background:var(--accent-hover); border-color:var(--accent-hover); color:#1a120a; }
 
-  .filter-chips { display:flex; gap:var(--space-2); padding:var(--space-2) var(--space-3) 0; flex-wrap:wrap; }
-  .chip {
-    padding:var(--space-1) var(--space-3); font-size:var(--text-xs);
-    border:1px solid var(--border); border-radius:var(--radius-full);
-    color:var(--text-muted); background:var(--surface-3);
-  }
-  .chip.active { color:var(--accent); border-color:var(--accent); background:var(--accent-soft); }
+  .filter-chips { display:flex; gap:var(--space-2); padding:var(--space-2) var(--space-3); flex-wrap:wrap; border-bottom:1px solid var(--border-soft); }
+  .chip { padding:var(--space-1) var(--space-3); font-size:var(--text-xs); border:1px solid var(--border); border-radius:var(--radius-full); color:var(--text-muted); background:var(--surface-3); display:inline-flex; align-items:center; gap:var(--space-1); }
+  .chip:hover { border-color:var(--accent); color:var(--text); }
+  .chip.active { color:var(--text); border-color:var(--accent); background:var(--accent-soft); }
+  .chip .dot { width:8px; height:8px; border-radius:50%; }
 
   .list-wrap { flex:1; min-height:0; overflow:hidden; position:relative; }
   .vscroll { height:100%; overflow-y:auto; overflow-anchor:none; }
   .vspacer { position:relative; width:100%; }
-
-  .row {
-    position:absolute; left:0; right:0;
-    display:flex; align-items:center; gap:var(--space-3);
-    padding:var(--space-2) var(--space-4);
-    border-bottom:1px solid var(--border-soft);
-  }
+  .row { position:absolute; left:0; right:0; display:flex; align-items:center; gap:var(--space-3); padding:var(--space-2) var(--space-4); border-bottom:1px solid var(--border-soft); }
   .row:nth-child(even) { background:var(--row-stripe); }
-  .row .idx { font-family:var(--font-mono); font-size:11px; color:var(--text-faint); min-width:3em; text-align:right; flex:none; }
-  .swatch {
-    position:relative; width:34px; height:34px; flex:none;
-    border-radius:var(--radius-sm); border:1px solid var(--border);
-    cursor:pointer; overflow:hidden;
-    background:
-      linear-gradient(45deg, var(--surface-3) 25%, transparent 25%) 0 0/10px 10px,
-      linear-gradient(-45deg, var(--surface-3) 25%, transparent 25%) 0 5px/10px 10px;
-  }
-  .swatch input[type=color] {
-    position:absolute; inset:-2px; width:calc(100% + 4px); height:calc(100% + 4px);
-    border:none; padding:0; cursor:pointer; opacity:0;
-  }
+  .row .idx { font-family:var(--font-mono); font-size:11px; color:var(--text-faint); min-width:2.5em; text-align:right; flex:none; }
+  .type-badge { font-size:10px; font-weight:600; padding:2px 7px; border-radius:var(--radius-full); flex:none; white-space:nowrap; letter-spacing:0.02em; }
+  .t-ship { background:color-mix(in oklab, var(--chip-ship) 18%, transparent); color:var(--chip-ship); }
+  .t-hand { background:color-mix(in oklab, var(--chip-hand) 18%, transparent); color:var(--chip-hand); }
+  .t-ground { background:color-mix(in oklab, var(--chip-ground) 18%, transparent); color:var(--chip-ground); }
+  .t-harvest { background:color-mix(in oklab, var(--chip-harvest) 18%, transparent); color:var(--chip-harvest); }
+  .t-creature { background:color-mix(in oklab, var(--chip-creature) 18%, transparent); color:var(--chip-creature); }
+  .t-rare { background:color-mix(in oklab, var(--chip-rare) 18%, transparent); color:var(--chip-rare); }
+  .t-pyro { background:color-mix(in oklab, var(--chip-pyro) 18%, transparent); color:var(--chip-pyro); }
+  .swatch { position:relative; width:36px; height:36px; flex:none; border-radius:var(--radius-sm); border:1px solid var(--border); cursor:pointer; overflow:hidden; background:linear-gradient(45deg, var(--surface-3) 25%, transparent 25%) 0 0/10px 10px, linear-gradient(-45deg, var(--surface-3) 25%, transparent 25%) 0 5px/10px 10px; }
+  .swatch input[type=color] { position:absolute; inset:-2px; width:calc(100% + 4px); height:calc(100% + 4px); border:none; padding:0; cursor:pointer; opacity:0; }
   .swatch .fill { position:absolute; inset:0; }
-  .swatch.empty .fill { display:none; }
-  .row .key {
-    font-family:var(--font-mono); font-size:12px; font-weight:500;
-    color:var(--text); flex:1; min-width:0;
-    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-  }
-  .row .val {
-    font-family:var(--font-mono); font-size:11px; color:var(--text-faint);
-    flex:1.2; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-  }
-  .hex {
-    width:84px; flex:none;
-    font-family:var(--font-mono); font-size:11px;
-    padding:var(--space-1) var(--space-2);
-    background:var(--surface-3); border:1px solid var(--border);
-    border-radius:var(--radius-sm); text-align:center;
-    text-transform:uppercase;
-  }
+  .row .key { font-family:var(--font-mono); font-size:12.5px; font-weight:600; color:var(--text); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .row .loc { font-size:10.5px; color:var(--text-faint); flex:1.4; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .hex { width:78px; flex:none; font-family:var(--font-mono); font-size:11px; padding:var(--space-1) var(--space-2); background:var(--surface-3); border:1px solid var(--border); border-radius:var(--radius-sm); text-align:center; text-transform:uppercase; }
   .hex:focus { border-color:var(--accent); }
-  .clear-x {
-    width:22px; height:22px; flex:none; display:grid; place-items:center;
-    color:var(--text-faint); border-radius:var(--radius-sm);
-  }
+  .clear-x { width:22px; height:22px; flex:none; display:grid; place-items:center; color:var(--text-faint); border-radius:var(--radius-sm); }
   .clear-x:hover { color:var(--danger); background:var(--surface-3); }
-
   .empty-state { padding:var(--space-12); text-align:center; color:var(--text-muted); }
   .empty-state svg { color:var(--text-faint); margin:0 auto var(--space-4); }
 
-  /* ---------- Right: output ---------- */
+  /* Right */
   .out-actions { display:flex; gap:var(--space-2); margin-left:auto; }
-  .seg {
-    display:flex; border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden;
-    background:var(--surface-3);
-  }
-  .seg button {
-    padding:var(--space-2) var(--space-3); font-size:var(--text-xs);
-    color:var(--text-muted); border-right:1px solid var(--border);
-  }
+  .seg { display:flex; border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden; background:var(--surface-3); }
+  .seg button { padding:var(--space-2) var(--space-3); font-size:var(--text-xs); color:var(--text-muted); border-right:1px solid var(--border); }
   .seg button:last-child { border-right:none; }
   .seg button.active { background:var(--accent-soft); color:var(--accent); }
-  .copy-btn {
-    padding:var(--space-2) var(--space-4); font-size:var(--text-sm); font-weight:700;
-    background:var(--accent); color:#1a120a; border-radius:var(--radius-md);
-    display:inline-flex; align-items:center; gap:var(--space-2);
-  }
+  .copy-btn { padding:var(--space-2) var(--space-4); font-size:var(--text-sm); font-weight:700; background:var(--accent); color:#1a120a; border-radius:var(--radius-md); display:inline-flex; align-items:center; gap:var(--space-2); }
   .copy-btn:hover { background:var(--accent-hover); }
   .copy-btn.done { background:var(--success); }
-  .dl-btn {
-    padding:var(--space-2) var(--space-3); font-size:var(--text-xs);
-    border:1px solid var(--border); border-radius:var(--radius-md); color:var(--text-muted);
-  }
+  .dl-btn { padding:var(--space-2) var(--space-3); font-size:var(--text-xs); border:1px solid var(--border); border-radius:var(--radius-md); color:var(--text-muted); display:inline-flex; align-items:center; gap:var(--space-1); }
   .dl-btn:hover { color:var(--text); border-color:var(--accent); }
-
-  .out-format {
-    padding:var(--space-2) var(--space-4);
-    border-bottom:1px solid var(--border-soft);
-    display:flex; gap:var(--space-4); align-items:center; font-size:var(--text-xs); color:var(--text-muted);
-  }
+  .out-format { padding:var(--space-2) var(--space-4); border-bottom:1px solid var(--border-soft); display:flex; gap:var(--space-4); align-items:center; font-size:var(--text-xs); color:var(--text-muted); flex-wrap:wrap; }
   .out-format code { font-family:var(--font-mono); color:var(--accent); background:var(--accent-soft); padding:1px 6px; border-radius:var(--radius-sm); }
-
   .out-stale { color:var(--danger); font-family:var(--font-mono); margin-left:auto; }
-  textarea.output {
-    flex:1; min-height:0; resize:none;
-    font-family:var(--font-mono); font-size:12.5px; line-height:1.5;
-    padding:var(--space-3); background:var(--surface); border:none; outline:none;
-    tab-size:4; white-space:pre; overflow:auto;
-  }
+  textarea.output { flex:1; min-height:0; resize:none; font-family:var(--font-mono); font-size:12px; line-height:1.5; padding:var(--space-3); background:var(--surface); border:none; outline:none; tab-size:4; white-space:pre; overflow:auto; }
 
-  /* toast */
-  .toast {
-    position:fixed; bottom:var(--space-6); left:50%; transform:translateX(-50%) translateY(20px);
-    background:var(--surface-3); border:1px solid var(--border);
-    color:var(--text); padding:var(--space-3) var(--space-5);
-    border-radius:var(--radius-md); font-size:var(--text-sm); font-weight:500;
-    box-shadow:0 8px 24px rgba(0,0,0,0.3);
-    opacity:0; pointer-events:none; transition:all var(--transition); z-index:50;
-  }
+  .toast { position:fixed; bottom:var(--space-6); left:50%; transform:translateX(-50%) translateY(20px); background:var(--surface-3); border:1px solid var(--border); color:var(--text); padding:var(--space-3) var(--space-5); border-radius:var(--radius-md); font-size:var(--text-sm); font-weight:500; box-shadow:0 8px 24px rgba(0,0,0,0.3); opacity:0; pointer-events:none; transition:all var(--transition); z-index:50; }
   .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
   @media (max-width: 980px) {
-    .workspace { grid-template-columns:1fr; grid-auto-rows:minmax(300px,1fr); }
+    .workspace { grid-template-columns:1fr; grid-auto-rows:minmax(320px,1fr); }
     .pane { border-right:none; border-bottom:1px solid var(--border); }
     .stats { display:none; }
   }
@@ -325,125 +167,195 @@
 <header class="topbar">
   <div class="brand">
     <svg class="logo" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
-      <path d="M16 3 5 9v14l11 6 11-6V9L16 3Z"/>
-      <path d="M16 3v14M5 9l11 8 11-8" opacity="0.6"/>
+      <path d="M16 3 5 9v14l11 6 11-6V9L16 3Z"/><path d="M16 3v14M5 9l11 8 11-8" opacity="0.6"/>
     </svg>
     <div>
       <h1>Ore Color INI Editor</h1>
-      <div class="sub">load an .ini · pick a color per key · export</div>
+      <div class="sub">Star Citizen mining resources · pick a color per ore · export ini</div>
     </div>
   </div>
-
   <div class="stats" id="stats">
-    <span><b id="stEntries">0</b> entries</span>
+    <span><b id="stOres">0</b> ores</span>
     <span><b id="stColored">0</b> colored</span>
-    <span><b id="stLines">0</b> lines</span>
+    <span><b id="stShown">0</b> shown</span>
   </div>
-
   <input type="file" id="fileInput" accept=".ini,.txt,.cfg,.conf,text/plain" hidden />
-  <button class="file-btn ghost" id="sampleBtn">Load sample</button>
-  <button class="file-btn" id="openBtn">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-    Open INI
-  </button>
   <button class="icon-btn" id="themeBtn" aria-label="Toggle theme"></button>
 </header>
 
 <main class="workspace">
 
-  <!-- LEFT: file viewer -->
-  <section class="pane" id="leftPane">
-    <div class="pane-head">
-      <h2>Source file</h2>
-      <span class="count" id="srcCount">no file</span>
-    </div>
+  <!-- LEFT -->
+  <section class="pane">
+    <div class="pane-head"><h2>Source file</h2><span class="count" id="srcCount">no file</span></div>
     <div class="pane-body">
-      <div class="dropzone show" id="dropzone">
+      <div class="left-actions">
+        <button class="mini-btn primary" id="openBtn">Open INI</button>
+        <button class="mini-btn" id="importBtn" title="Read OreName=#hex lines from the loaded file">Import colors</button>
+      </div>
+      <div class="dropzone" id="dropzone">
         <p class="big">Drop an .ini here</p>
-        <p>or use “Open INI”. Each <code style="font-family:var(--font-mono);color:var(--accent)">key=value</code> line becomes an ore type.</p>
+        <p>Optional — view your <code style="font-family:var(--font-mono);color:var(--accent)">global.ini</code> and pull in existing ore colors.</p>
       </div>
       <div class="file-meta" id="fileMeta" hidden></div>
       <div class="raw-view" id="rawView" hidden></div>
     </div>
   </section>
 
-  <!-- CENTER: color picker -->
-  <section class="pane" id="centerPane">
-    <div class="pane-head">
-      <h2>Ore types</h2>
-      <span class="count" id="centerCount">—</span>
-    </div>
+  <!-- CENTER -->
+  <section class="pane">
+    <div class="pane-head"><h2>Ore types</h2><span class="count" id="centerCount">—</span></div>
     <div class="pane-body">
       <div class="toolbar">
         <label class="search">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-          <input type="search" id="search" placeholder="Filter keys or values…" />
+          <input type="search" id="search" placeholder="Filter ores, types, locations…" />
         </label>
-        <button class="mini-btn" id="autoBtn" title="Assign distinct colors to all filtered">Auto-color</button>
-        <button class="mini-btn" id="randBtn" title="Random palette for filtered">Randomize</button>
-        <button class="mini-btn danger" id="clearBtn" title="Clear colors on filtered">Clear</button>
+        <button class="mini-btn" id="defaultBtn" title="Reset to type-based default colors">Defaults</button>
+        <button class="mini-btn" id="autoBtn" title="Assign a distinct hue to every ore">Auto-color</button>
+        <button class="mini-btn" id="randBtn" title="Randomize visible">Randomize</button>
+        <button class="mini-btn danger" id="clearBtn" title="Clear colors on visible">Clear</button>
       </div>
-      <div class="filter-chips">
-        <button class="chip active" data-filter="all">All</button>
-        <button class="chip" data-filter="colored">Colored</button>
-        <button class="chip" data-filter="uncolored">Uncolored</button>
-      </div>
+      <div class="filter-chips" id="filterChips"></div>
       <div class="list-wrap">
-        <div class="vscroll" id="vscroll">
-          <div class="vspacer" id="vspacer"></div>
-        </div>
+        <div class="vscroll" id="vscroll"><div class="vspacer" id="vspacer"></div></div>
       </div>
       <div class="empty-state" id="emptyState" hidden>
         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 7h-9M14 17H5M17 7a3 3 0 1 0-6 0M7 17a3 3 0 1 0-6 0"/></svg>
-        <p>No ore types match.</p>
+        <p>No ores match.</p>
       </div>
     </div>
   </section>
 
-  <!-- RIGHT: output -->
-  <section class="pane" id="rightPane">
+  <!-- RIGHT -->
+  <section class="pane">
     <div class="pane-head">
       <h2>Modified INI</h2>
       <div class="out-actions">
-        <button class="dl-btn" id="dlBtn" title="Download .ini">Download</button>
+        <button class="dl-btn" id="dlBtn">Download</button>
         <button class="copy-btn" id="copyBtn">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
-          Copy
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>Copy
         </button>
       </div>
     </div>
     <div class="out-format">
       <div class="seg" id="fmtSeg">
-        <button class="active" data-fmt="append">Append lines</button>
-        <button data-fmt="map">Color map only</button>
+        <button class="active" data-fmt="block">Color block</button>
+        <button data-fmt="section">[OreColors]</button>
+        <button data-fmt="append">Append to source</button>
       </div>
       <span id="fmtHint"></span>
       <span class="out-stale" id="staleTag" hidden>● stale</span>
     </div>
-    <textarea class="output" id="output" spellcheck="false" placeholder="Load a file and assign colors — the modified INI appears here."></textarea>
+    <textarea class="output" id="output" spellcheck="false" placeholder="Assign colors to ores — the generated INI appears here."></textarea>
   </section>
 
 </main>
-
 <div class="toast" id="toast"></div>
 
 <script>
 (() => {
   'use strict';
+  const ROW_H = 52;
+  const $ = id => document.getElementById(id);
+
+  // ---------- Ore data (from beltakoda.github.io/ScCompLangPackRemix) ----------
+  const ORES = [
+    {n:"Agricium",t:"Ship Mineable",l:"Found in All Deposits"},
+    {n:"Aluminium",t:"Ship Mineable",l:"Aaron Halo, Cellin, Yela, Stanton Lagrange Points, Pyro Asteroid Clusters"},
+    {n:"Aluminum",t:"Ship Mineable",l:"Hurston, Arial, Aberdeen, Magda"},
+    {n:"Alumium",t:"Ship Mineable",l:"Ita (CIG typo)"},
+    {n:"Amiant Pod",t:"Harvestable",l:"Bloom (Pyro III)"},
+    {n:"Amioshi Plague",t:"Harvestable",l:"All Moons/Planets (Caves)"},
+    {n:"Aphorite",t:"Hand Mineable",l:"All Moons/Planets/Caves"},
+    {n:"Armillaria",t:"Harvestable",l:"All Moons/Planets (Caves)"},
+    {n:"Aslarite",t:"Ship Mineable",l:"Aaron Halo, Magda, Ita, Pyro Asteroid Clusters, Fuego, Vuur"},
+    {n:"Beradon",t:"Ground Vehicle Mineable",l:"Pyro I, Bloom (Pyro III)"},
+    {n:"Beryl",t:"Ship Mineable",l:"Found in All Deposits"},
+    {n:"Bexalite",t:"Ship Mineable (Rare)",l:"Found in All Deposits (Rare)"},
+    {n:"Borase",t:"Ship Mineable",l:"Found in All Deposits"},
+    {n:"Caranite",t:"Hand Mineable",l:"Aberdeen, Daymar"},
+    {n:"CompBoard",t:"Harvestable",l:"Hurston"},
+    {n:"Copper",t:"Ship Mineable",l:"Aaron Halo, Aberdeen, Daymar, Stanton Lagrange Points, Pyro Asteroid Clusters, Lyria, Clio, Euterpe, Pyro I, Pyro IV, Terminus"},
+    {n:"Corundum",t:"Ship Mineable",l:"Aaron Halo, Calliope, Clio, Euterpe, Lyria, microTech, Pyro Asteroid Clusters, Arial"},
+    {n:"Decari Pod",t:"Harvestable",l:"Pyro I"},
+    {n:"Degnous Root",t:"Harvestable",l:"Hurston"},
+    {n:"Dolivine",t:"Hand Mineable",l:"All Moons/Planets/Caves"},
+    {n:"Feynmaline",t:"Ground Vehicle Mineable",l:"Pyro IV"},
+    {n:"Flareweed Stalk",t:"Harvestable",l:"Bloom (Pyro III)"},
+    {n:"Fotia Seedpod",t:"Harvestable",l:"Pyro I"},
+    {n:"Glacosite",t:"Ground Vehicle Mineable",l:"Monox (Pyro II)"},
+    {n:"Gold",t:"Ship Mineable (Rare)",l:"Found in All Deposits (Rare)"},
+    {n:"Golden Medmon",t:"Harvestable",l:"Hurston, microTech"},
+    {n:"Hadanite",t:"Hand Mineable",l:"All Moons/Planets/Caves"},
+    {n:"Heart of the Woods",t:"Harvestable",l:"microTech"},
+    {n:"Hephaestanite",t:"Ship Mineable",l:"Found in All Deposits"},
+    {n:"Ice",t:"Ship Mineable",l:"Outer Pyro Asteroids, microTech, Calliope, Clio, Euterpe, Terminus"},
+    {n:"Iron",t:"Ship Mineable",l:"Aaron Halo, Aberdeen, Arial, Daymar, Ita, Magda, Stanton Lagrange Points, Pyro Asteroid Clusters, Lyria, Wala, microTech, Calliope, Pyro I, Monox, Vatra, Adir, Terminus"},
+    {n:"Janalite",t:"Hand Mineable",l:"Daymar, Hurston, Ita, Magda Sand Caves, Wala, Lyria, microTech, Calliope, Clio, Euterpe, Bloom, Fuego, Terminus"},
+    {n:"Janalite (Caves only)",t:"Hand Mineable",l:"Hurston, Arial, Aberdeen, Magda, Ita, Cellin, Daymar, Pyro I, Monox, Pyro IV, Ignis, Vatra, Adir, Fairo, Vuur"},
+    {n:"Juvenile Valakkar",t:"Creature",l:"Hurston, Daymar"},
+    {n:"Kopion",t:"Creature",l:"Hurston, microTech"},
+    {n:"Laranite",t:"Ship Mineable",l:"Found in All Deposits"},
+    {n:"Lindinium",t:"Ship Mineable",l:"Glaciem Ring"},
+    {n:"Marok",t:"Creature",l:"Hurston, microTech"},
+    {n:"Ouratite",t:"Ship Mineable",l:"Hurston, Arial, Aberdeen, Cellin, Yela's Ring"},
+    {n:"Pingala Seeds",t:"Harvestable",l:"Monox (Pyro II)"},
+    {n:"Pitambu",t:"Harvestable",l:"Hurston, microTech"},
+    {n:"Prota",t:"Harvestable",l:"Hurston"},
+    {n:"Quantainium",t:"Ship Mineable (Rare)",l:"Found in All Deposits (Rare)"},
+    {n:"Quartz",t:"Ship Mineable",l:"Aaron Halo, Aberdeen, Ariel, Calliope, Clio, Euterpe, Lyria, microTech, CRU-L5, ARC-L3, MIC-L4, Pyro Asteroid Clusters, Cellin, Daymar, Yela, Bloom"},
+    {n:"Quasigrazer",t:"Creature",l:"Hurston, microTech, Monox (Pyro II), Bloom (Pyro III), Pyro IV"},
+    {n:"Ranta Dung",t:"Harvestable",l:"All Moons/Planets (Caves)"},
+    {n:"Revenant Pod",t:"Harvestable",l:"Hurston"},
+    {n:"Riccite",t:"Ship Mineable (Rare, Pyro Only)",l:"Found in All Pyro Deposits (Rare)"},
+    {n:"Sadaryx",t:"Ship Mineable",l:"QV Breaker Stations (Nyx)"},
+    {n:"Savrilium",t:"Ship Mineable",l:"Glaciem Ring, QV Breaker Stations (Nyx)"},
+    {n:"Silicon",t:"Ship Mineable",l:"Inner Pyro Asteroids, Daymar, Yela, Ignis, Vatra, Fairo"},
+    {n:"Stileron",t:"Ship Mineable (Rare, Pyro Only)",l:"Found in All Pyro Deposits (Rare)"},
+    {n:"Stone Bug Shell",t:"Harvestable",l:"Daymar (Caves)"},
+    {n:"Sunset Berry",t:"Harvestable",l:"microTech"},
+    {n:"Taranite",t:"Ship Mineable (Rare)",l:"Found in All Deposits (Rare)"},
+    {n:"Tarantite",t:"Ship Mineable",l:"Cellin, Yela"},
+    {n:"Tin",t:"Ship Mineable",l:"Pyro III, Pyro IV, Hurston, Arial, Ita, Pyro I, Monox, Ignis"},
+    {n:"Titanium",t:"Ship Mineable",l:"Aaron Halo, Cellin, Daymar, Yela, Stanton Lagrange Points, Pyro Asteroid Clusters, Aberdeen, Magda, Terminus"},
+    {n:"Torite",t:"Ship Mineable",l:"Glaciem Ring, QV Breaker Stations (Nyx)"},
+    {n:"Tungsten",t:"Ship Mineable",l:"Aaron Halo, Lyria, Wala, CRU-L1, CRU-L2, CRU-L5, ARC-L3, MIC-L4, HUR-L3, Adir, Fairo"},
+    {n:"Wuotan Seeds",t:"Harvestable",l:"Pyro I"}
+  ];
+
+  // type classification -> badge class + default color
+  function typeClass(t){
+    if (t.includes("Pyro Only")) return {cls:"t-pyro", def:"#e0552a"};
+    if (t.includes("Rare")) return {cls:"t-rare", def:"#e0b43a"};
+    if (t.includes("Ship")) return {cls:"t-ship", def:"#4a90c2"};
+    if (t.includes("Hand")) return {cls:"t-hand", def:"#d4843a"};
+    if (t.includes("Ground")) return {cls:"t-ground", def:"#8a9a3a"};
+    if (t.includes("Harvestable")) return {cls:"t-harvest", def:"#4f9a5a"};
+    if (t.includes("Creature")) return {cls:"t-creature", def:"#c25656"};
+    return {cls:"", def:"#9d9387"};
+  }
+  const TYPE_CATS = [
+    {label:"All", match:null, dot:null},
+    {label:"Ship Mineable", match:"Ship Mineable", dot:"var(--chip-ship)"},
+    {label:"Hand Mineable", match:"Hand Mineable", dot:"var(--chip-hand)"},
+    {label:"Ground Vehicle", match:"Ground Vehicle Mineable", dot:"var(--chip-ground)"},
+    {label:"Harvestable", match:"Harvestable", dot:"var(--chip-harvest)"},
+    {label:"Creature", match:"Creature", dot:"var(--chip-creature)"}
+  ];
 
   // ---------- State ----------
-  const ROW_H = 48;
-  let lines = [];            // raw original lines (no trailing newline)
-  let entries = [];         // {i, lhs, rhs, raw, hasEq}
-  let filtered = [];        // entries passing current search + filter
-  let colors = new Map();   // lhs -> #RRGGBB
-  let fileName = 'global.ini';
-  let filterMode = 'all';
-  let outFormat = 'append';
+  let colors = new Map();      // ore name -> #RRGGBB
+  let defaults = new Map();     // ore name -> default #RRGGBB
+  let filtered = ORES.map((o,i)=>i);  // indices into ORES
+  let filterMatch = null;
+  let outFormat = 'block';
   let dirty = false, renderPending = false;
-  let firstRender = 0, lastRender = 0;
+  let srcLines = [];
+  let srcName = '';
 
-  const $ = id => document.getElementById(id);
+  // seed defaults
+  ORES.forEach(o => { defaults.set(o.n, typeClass(o.t).def); colors.set(o.n, typeClass(o.t).def); });
 
   // ---------- Theme ----------
   (function(){
@@ -457,99 +369,33 @@
     b.addEventListener('click', ()=>{ t = t==='dark'?'light':'dark'; document.documentElement.setAttribute('data-theme',t); paint(); });
   })();
 
-  // ---------- Parsing ----------
-  function parse(text){
-    // normalize line endings, strip BOM
-    text = text.replace(/^\uFEFF/, '');
-    lines = text.split(/\r\n|\r|\n/);
-    if (lines.length && lines[lines.length-1] === '') lines.pop();
-    entries = [];
-    for (let i=0;i<lines.length;i++){
-      const raw = lines[i];
-      const eq = raw.indexOf('=');
-      if (eq === -1){ entries.push({i, lhs:null, rhs:null, raw, hasEq:false}); }
-      else { entries.push({i, lhs:raw.slice(0,eq), rhs:raw.slice(eq+1), raw, hasEq:true}); }
-    }
-  }
-
-  // ---------- File loading ----------
-  function loadText(text, name){
-    parse(text);
-    fileName = name || 'global.ini';
-    colors = new Map();
-    $('dropzone').classList.remove('show');
-    $('fileMeta').hidden = false;
-    $('rawView').hidden = false;
-    $('fileMeta').innerHTML = `<span><b>${esc(fileName)}</b></span><span>${lines.length.toLocaleString()} lines</span><span>${entries.filter(e=>e.hasEq).length.toLocaleString()} entries</span><span>${(text.length/1024).toFixed(0)} KB</span>`;
-    renderRawView();
-    applyFilter();
-    scheduleGenerate();
-    updateStats();
-  }
-
-  function renderRawView(){
-    const view = $('rawView');
-    // virtualize the raw view too for very large files
-    view.innerHTML = '';
-    const MAX = 20000; // direct render cap; beyond that virtualize
-    if (lines.length <= MAX){
-      const frag = document.createDocumentFragment();
-      for (let i=0;i<lines.length;i++){
-        const e = entries[i];
-        const ln = document.createElement('div');
-        ln.className = 'raw-line';
-        if (!e.hasEq){
-          ln.innerHTML = `<span class="ln">${i+1}</span><span class="lc">${esc(e.raw)}</span>`;
-        } else {
-          ln.innerHTML = `<span class="ln">${i+1}</span><span class="lhs">${esc(e.lhs)}</span><span class="eq">=</span><span class="rhs">${esc(trunc(e.rhs,120))}</span>`;
-        }
-        frag.appendChild(ln);
-      }
-      view.appendChild(frag);
-    } else {
-      renderRawVirtual();
-    }
-  }
-  function renderRawVirtual(){
-    const view = $('rawView');
-    view.innerHTML = '';
-    const spacer = document.createElement('div');
-    spacer.style.position='relative'; spacer.style.width='100%';
-    view.appendChild(spacer);
-    const RAW_H = 19;
-    const paint = () => {
-      const H = view.clientHeight;
-      const top = view.scrollTop;
-      const start = Math.max(0, Math.floor(top/RAW_H)-5);
-      const end = Math.min(lines.length, Math.ceil((top+H)/RAW_H)+5);
-      spacer.style.height = (lines.length*RAW_H)+'px';
-      let html='';
-      for (let i=start;i<end;i++){
-        const e = entries[i];
-        html += !e.hasEq
-          ? `<div class="raw-line" style="position:absolute;top:${i*RAW_H}px"><span class="ln">${i+1}</span><span class="lc">${esc(trunc(e.raw,160))}</span></div>`
-          : `<div class="raw-line" style="position:absolute;top:${i*RAW_H}px"><span class="ln">${i+1}</span><span class="lhs">${esc(trunc(e.lhs,80))}</span><span class="eq">=</span><span class="rhs">${esc(trunc(e.rhs,120))}</span></div>`;
-      }
-      spacer.innerHTML = html;
-    };
-    view._paint = paint;
-    paint();
-    view.onscroll = () => requestAnimationFrame(paint);
-  }
+  // ---------- Filter chips ----------
+  const chipsEl = $('filterChips');
+  TYPE_CATS.forEach(cat => {
+    const b = document.createElement('button');
+    b.className = 'chip' + (cat.match===null ? ' active':'');
+    b.innerHTML = (cat.dot? `<span class="dot" style="background:${cat.dot}"></span>`:'') + cat.label;
+    b.addEventListener('click', ()=>{
+      filterMatch = cat.match;
+      chipsEl.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      applyFilter();
+    });
+    chipsEl.appendChild(b);
+  });
 
   // ---------- Filtering ----------
   function applyFilter(){
     const q = $('search').value.trim().toLowerCase();
-    filtered = entries.filter(e=>{
-      if (!e.hasEq) return false;
-      if (filterMode==='colored' && !colors.has(e.lhs)) return false;
-      if (filterMode==='uncolored' && colors.has(e.lhs)) return false;
-      if (q){
-        if (e.lhs.toLowerCase().indexOf(q)===-1 && (e.rhs||'').toLowerCase().indexOf(q)===-1) return false;
-      }
-      return true;
-    });
-    $('centerCount').textContent = filtered.length ? `${filtered.length.toLocaleString()} shown` : '—';
+    filtered = [];
+    for (let i=0;i<ORES.length;i++){
+      const o = ORES[i];
+      if (filterMatch && !o.t.includes(filterMatch)) continue;
+      if (q){ if (o.n.toLowerCase().indexOf(q)===-1 && o.t.toLowerCase().indexOf(q)===-1 && o.l.toLowerCase().indexOf(q)===-1) continue; }
+      filtered.push(i);
+    }
+    $('centerCount').textContent = `${filtered.length} / ${ORES.length}`;
+    $('stShown').textContent = filtered.length;
     $('emptyState').hidden = filtered.length>0;
     $('vscroll').scrollTop = 0;
     layoutList();
@@ -557,10 +403,8 @@
 
   // ---------- Virtual list ----------
   function layoutList(){
-    const scroll = $('vscroll');
     const spacer = $('vspacer');
     spacer.style.height = (filtered.length*ROW_H)+'px';
-    // clear existing rows
     [...spacer.querySelectorAll('.row')].forEach(r=>r.remove());
     paintRows();
   }
@@ -571,44 +415,48 @@
     const top = scroll.scrollTop;
     const start = Math.max(0, Math.floor(top/ROW_H)-2);
     const end = Math.min(filtered.length, Math.ceil((top+H)/ROW_H)+2);
-    firstRender = start; lastRender = end;
     let html='';
     for (let i=start;i<end;i++){
-      const e = filtered[i];
-      const c = colors.get(e.lhs) || '';
-      html += rowHTML(e, i, c);
+      const idx = filtered[i];
+      const o = ORES[idx];
+      const c = colors.get(o.n) || '';
+      const tc = typeClass(o.t);
+      const empty = !c;
+      html += `<div class="row" style="top:${i*ROW_H}px" data-i="${idx}" data-name="${attr(o.n)}">
+        <span class="idx">${i+1}</span>
+        <span class="type-badge ${tc.cls}">${esc(shortType(o.t))}</span>
+        <label class="swatch ${empty?'empty':''}">
+          <span class="fill" style="background:${c}"></span>
+          <input type="color" value="${c||'#d4843a'}" aria-label="color for ${attr(o.n)}">
+        </label>
+        <span class="key" title="${attr(o.n)} — ${attr(o.l)}">${esc(o.n)}</span>
+        <span class="loc" title="${attr(o.l)}">${esc(trunc(o.l,42))}</span>
+        <input class="hex" value="${c||''}" placeholder="—" spellcheck="false">
+        <button class="clear-x" title="Reset to default" aria-label="reset"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/></svg></button>
+      </div>`;
     }
-    // build nodes
     const range = document.createRange();
-    range.selectNodeContents(spacer);
+    range.selectNodeContents($('vspacer'));
     range.deleteContents();
-    const tmp = document.createElement('div');
-    tmp.innerHTML = html;
+    const tmp = document.createElement('div'); tmp.innerHTML = html;
     while (tmp.firstChild) spacer.appendChild(tmp.firstChild);
   }
-
-  function rowHTML(e, idx, c){
-    const empty = !c;
-    return `<div class="row" style="top:${idx*ROW_H}px" data-i="${idx}" data-lhs="${attr(e.lhs)}">
-      <span class="idx">${idx+1}</span>
-      <label class="swatch ${empty?'empty':''}" style="--cv:${c||'transparent'}">
-        <span class="fill" style="background:${c}"></span>
-        <input type="color" value="${c||'#d4843a'}" aria-label="color for ${attr(e.lhs)}">
-      </label>
-      <span class="key" title="${attr(e.lhs)}">${esc(trunc(e.lhs,40))}</span>
-      <span class="val" title="${attr(e.rhs||'')}">${esc(trunc(e.rhs||'',48))}</span>
-      <input class="hex" value="${c||''}" placeholder="—" spellcheck="false">
-      <button class="clear-x" title="Clear color" ${empty?'hidden':''} aria-label="clear">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
-      </button>
-    </div>`;
+  function shortType(t){
+    if (t.includes("Pyro Only")) return "Pyro";
+    if (t.includes("Rare")) return "Rare";
+    if (t.includes("Ship")) return "Ship";
+    if (t.includes("Hand")) return "Hand";
+    if (t.includes("Ground")) return "GV";
+    if (t.includes("Harvestable")) return "Harv";
+    if (t.includes("Creature")) return "Creature";
+    return t;
   }
 
-  // ---------- Color change handling ----------
-  function setColor(lhs, hex){
+  // ---------- Color change ----------
+  function setColor(name, hex){
     hex = normalizeHex(hex);
-    if (hex){ colors.set(lhs, hex); }
-    else { colors.delete(lhs); }
+    if (hex){ colors.set(name, hex); }
+    else { colors.set(name, defaults.get(name)||''); }
     markDirty();
   }
   function normalizeHex(v){
@@ -620,212 +468,195 @@
     return v.toUpperCase();
   }
 
-  // event delegation on list
   $('vscroll').addEventListener('input', ev=>{
     const row = ev.target.closest('.row'); if (!row) return;
-    const lhs = row.dataset.lhs;
+    const name = row.dataset.name;
     if (ev.target.type==='color'){
-      setColor(lhs, ev.target.value);
-      row.querySelector('.swatch').classList.remove('empty');
-      row.querySelector('.swatch .fill').style.background = ev.target.value;
-      const hex = row.querySelector('.hex'); hex.value = ev.target.value.toUpperCase();
-      row.querySelector('.clear-x').hidden = false;
-    } else if (ev.target.classList.contains('hex')){
-      // debounced via change; nothing here
+      setColor(name, ev.target.value);
+      const sw = row.querySelector('.swatch'); sw.classList.remove('empty');
+      sw.querySelector('.fill').style.background = ev.target.value;
+      row.querySelector('.hex').value = ev.target.value.toUpperCase();
     }
   });
   $('vscroll').addEventListener('change', ev=>{
     const row = ev.target.closest('.row'); if (!row) return;
-    const lhs = row.dataset.lhs;
+    const name = row.dataset.name;
     if (ev.target.classList.contains('hex')){
       const n = normalizeHex(ev.target.value);
-      if (n){ setColor(lhs, n); ev.target.value = n;
+      if (n){ setColor(name, n); ev.target.value = n;
         row.querySelector('.swatch').classList.remove('empty');
         row.querySelector('.swatch .fill').style.background = n;
-        const ci = row.querySelector('input[type=color]'); ci.value = n;
-        row.querySelector('.clear-x').hidden = false;
-      } else { ev.target.value = colors.get(lhs)||''; }
+        row.querySelector('input[type=color]').value = n;
+      } else { ev.target.value = colors.get(name)||''; }
     }
   });
   $('vscroll').addEventListener('click', ev=>{
     const x = ev.target.closest('.clear-x'); if (!x) return;
-    const row = x.closest('.row');
-    setColor(row.dataset.lhs, null);
-    row.querySelector('.swatch').classList.add('empty');
-    row.querySelector('.swatch .fill').style.background = '';
-    row.querySelector('.hex').value = '';
-    row.querySelector('.clear-x').hidden = true;
+    const row = x.closest('.row'); const name = row.dataset.name;
+    const d = defaults.get(name)||'';
+    colors.set(name, d);
+    row.querySelector('.swatch .fill').style.background = d;
+    row.querySelector('.hex').value = d;
+    row.querySelector('input[type=color]').value = d;
+    markDirty();
   });
+  $('vscroll').addEventListener('scroll', ()=>{ requestAnimationFrame(paintRows); }, {passive:true});
 
-  $('vscroll').addEventListener('scroll', ()=>{
-    requestAnimationFrame(()=>{ paintRows(); });
-  }, {passive:true});
-
-  // ---------- Search & filter chips ----------
+  // ---------- Search ----------
   let searchTimer;
-  $('search').addEventListener('input', ()=>{ clearTimeout(searchTimer); searchTimer=setTimeout(applyFilter,140); });
-  document.querySelectorAll('.chip').forEach(c=>{
-    c.addEventListener('click', ()=>{
-      document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));
-      c.classList.add('active');
-      filterMode = c.dataset.filter;
-      applyFilter();
-    });
-  });
+  $('search').addEventListener('input', ()=>{ clearTimeout(searchTimer); searchTimer=setTimeout(applyFilter,120); });
 
-  // ---------- Bulk actions ----------
-  function eachFiltered(fn){
-    // operate on unique lhs within filtered
-    const seen = new Set();
-    filtered.forEach(e=>{ if (!seen.has(e.lhs)){ seen.add(e.lhs); fn(e.lhs); } });
-  }
+  // ---------- Bulk ----------
+  function eachVisible(fn){ filtered.forEach(i=>fn(ORES[i].n)); }
+  $('defaultBtn').addEventListener('click', ()=>{ eachVisible(n=>colors.set(n, defaults.get(n)||'')); paintRows(); markDirty(); toast('Reset to defaults'); });
   $('autoBtn').addEventListener('click', ()=>{
-    const n = filtered.length;
-    let i = 0;
-    eachFiltered(lhs=>{
-      const hue = Math.round((i/Math.max(n,1))*360);
-      colors.set(lhs, hslToHex(hue, 62, 52));
-      i++;
-    });
-    paintRows(); markDirty();
+    const n = filtered.length; let i=0;
+    eachVisible(nm=>{ colors.set(nm, hslToHex(Math.round((i/Math.max(n,1))*360), 58, 54)); i++; });
+    paintRows(); markDirty(); toast('Auto-colored by hue');
   });
-  $('randBtn').addEventListener('click', ()=>{
-    eachFiltered(lhs=>{ colors.set(lhs, hslToHex(Math.floor(Math.random()*360), 55+Math.random()*25, 45+Math.random()*15)); });
-    paintRows(); markDirty();
-  });
-  $('clearBtn').addEventListener('click', ()=>{
-    eachFiltered(lhs=>{ colors.delete(lhs); });
-    paintRows(); markDirty();
-  });
+  $('randBtn').addEventListener('click', ()=>{ eachVisible(nm=>colors.set(nm, hslToHex(Math.floor(Math.random()*360), 55+Math.random()*25, 45+Math.random()*18))); paintRows(); markDirty(); });
+  $('clearBtn').addEventListener('click', ()=>{ eachVisible(nm=>colors.set(nm, '')); paintRows(); markDirty(); toast('Colors cleared'); });
 
   function hslToHex(h,s,l){
-    s/=100; l/=100;
-    const k=n=>(n+h/30)%12;
+    s/=100; l/=100; const k=n=>(n+h/30)%12;
     const a=s*Math.min(l,1-l);
     const f=n=>{const c=l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));return Math.round(255*c).toString(16).padStart(2,'0');};
     return ('#'+f(0)+f(8)+f(4)).toUpperCase();
   }
 
-  // ---------- Output generation ----------
+  // ---------- Output ----------
   function generate(){
-    const parts = [];
-    if (outFormat==='map'){
-      for (const e of entries){
-        if (e.hasEq && colors.has(e.lhs)){
-          parts.push(e.lhs + '=' + colors.get(e.lhs));
-        }
-      }
+    const lines = [];
+    if (outFormat==='block'){
+      lines.push('# Star Citizen ore colors');
+      lines.push('# Source: beltakoda.github.io/ScCompLangPackRemix');
+      lines.push('');
+      ORES.forEach(o=>{ const c = colors.get(o.n); if (c) lines.push(`${o.n}=${c}`); });
+    } else if (outFormat==='section'){
+      lines.push('[OreColors]');
+      ORES.forEach(o=>{ const c = colors.get(o.n); if (c) lines.push(`${o.n}=${c}`); });
     } else { // append
-      for (const e of entries){
-        parts.push(e.raw);
-        if (e.hasEq && colors.has(e.lhs)){
-          parts.push(e.lhs + '_Color=' + colors.get(e.lhs));
-        }
-      }
+      const base = srcLines.length ? srcLines : ['# (no source file loaded)'];
+      base.forEach(l=>lines.push(l));
+      lines.push('');
+      lines.push('# --- Ore colors ---');
+      ORES.forEach(o=>{ const c = colors.get(o.n); if (c) lines.push(`${o.n}=${c}`); });
     }
-    return parts.join('\n');
+    return lines.join('\n');
   }
   function scheduleGenerate(){
-    dirty = true;
-    $('staleTag').hidden = false;
-    if (renderPending) return;
-    renderPending = true;
-    requestAnimationFrame(()=>{
-      renderPending = false;
-      $('output').value = generate();
-      dirty = false;
-      $('staleTag').hidden = true;
-      updateStats();
-    });
+    dirty = true; $('staleTag').hidden = false;
+    if (renderPending) return; renderPending = true;
+    requestAnimationFrame(()=>{ renderPending=false; $('output').value = generate(); dirty=false; $('staleTag').hidden=true; updateStats(); });
   }
   function markDirty(){ scheduleGenerate(); }
-
-  // format seg
   document.querySelectorAll('#fmtSeg button').forEach(b=>{
     b.addEventListener('click', ()=>{
       document.querySelectorAll('#fmtSeg button').forEach(x=>x.classList.remove('active'));
-      b.classList.add('active');
-      outFormat = b.dataset.fmt;
-      updateFmtHint();
-      scheduleGenerate();
+      b.classList.add('active'); outFormat = b.dataset.fmt; updateFmtHint(); scheduleGenerate();
     });
   });
   function updateFmtHint(){
-    $('fmtHint').innerHTML = outFormat==='append'
-      ? 'Adds <code>Key_Color=#RRGGBB</code> after each colored line.'
-      : 'Only outputs <code>Key=#RRGGBB</code> for colored entries.';
+    $('fmtHint').innerHTML = outFormat==='block' ? '<code>Ore=#RRGGBB</code> for each colored ore + header.'
+      : outFormat==='section' ? '<code>[OreColors]</code> section, <code>Ore=#RRGGBB</code> per ore.'
+      : 'Source file lines + appended <code>Ore=#RRGGBB</code> block.';
   }
 
-  // ---------- Stats ----------
   function updateStats(){
-    $('stEntries').textContent = entries.filter(e=>e.hasEq).length.toLocaleString();
-    $('stColored').textContent = colors.size.toLocaleString();
-    $('stLines').textContent = lines.length.toLocaleString();
-    $('srcCount').textContent = lines.length ? fileName : 'no file';
+    let colored=0; colors.forEach(c=>{ if(c) colored++; });
+    $('stOres').textContent = ORES.length;
+    $('stColored').textContent = colored;
+    $('stShown').textContent = filtered.length;
   }
 
   // ---------- Copy / download ----------
   $('copyBtn').addEventListener('click', async ()=>{
     const text = $('output').value;
-    if (!text){ toast('Nothing to copy yet'); return; }
-    try{
-      await navigator.clipboard.writeText(text);
-    }catch(_){
-      const ta=$('output'); ta.focus(); ta.select(); document.execCommand('copy');
-    }
+    if (!text){ toast('Nothing to copy'); return; }
+    try { await navigator.clipboard.writeText(text); }
+    catch(_){ const ta=$('output'); ta.focus(); ta.select(); document.execCommand('copy'); }
     const b=$('copyBtn'); b.classList.add('done');
     b.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M20 6 9 17l-5-5"/></svg>Copied';
     setTimeout(()=>{ b.classList.remove('done'); b.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>Copy'; },1600);
   });
   $('dlBtn').addEventListener('click', ()=>{
-    const text=$('output').value;
-    if (!text){ toast('Nothing to download yet'); return; }
+    const text=$('output').value; if (!text){ toast('Nothing to download'); return; }
     const blob=new Blob([text],{type:'text/plain;charset=utf-8'});
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(blob);
-    a.download = outFormat==='map' ? 'ore_colors.ini' : fileName.replace(/(\.ini)$/i,'_colored$1') || 'output.ini';
-    a.click();
-    URL.revokeObjectURL(a.href);
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download = outFormat==='append' ? (srcName||'ore_colors') + (srcName?'.ini':'') : 'ore_colors.ini';
+    a.click(); URL.revokeObjectURL(a.href);
   });
 
-  // ---------- File open ----------
+  // ---------- Source file ----------
   $('openBtn').addEventListener('click', ()=>$('fileInput').click());
   $('fileInput').addEventListener('change', e=>{
     const f=e.target.files[0]; if(!f) return;
-    const r=new FileReader();
-    r.onload=()=>loadText(String(r.result), f.name);
-    r.readAsText(f);
+    const r=new FileReader(); r.onload=()=>loadSource(String(r.result), f.name); r.readAsText(f);
     e.target.value='';
   });
-  // drag & drop on whole window
   const dz=$('dropzone');
-  ['dragenter','dragover'].forEach(ev=>window.addEventListener(ev,e=>{e.preventDefault(); if(dz.classList.contains('show'))dz.classList.add('drag');}));
+  ['dragenter','dragover'].forEach(ev=>window.addEventListener(ev,e=>{e.preventDefault(); dz.classList.add('drag');}));
   ['dragleave','drop'].forEach(ev=>window.addEventListener(ev,e=>{e.preventDefault(); dz.classList.remove('drag');}));
   window.addEventListener('drop', e=>{
-    e.preventDefault();
-    const f=e.dataTransfer.files[0]; if(!f) return;
-    const r=new FileReader();
-    r.onload=()=>loadText(String(r.result), f.name);
-    r.readAsText(f);
+    e.preventDefault(); const f=e.dataTransfer.files[0]; if(!f) return;
+    const r=new FileReader(); r.onload=()=>loadSource(String(r.result), f.name); r.readAsText(f);
   });
-
-  // ---------- Sample ----------
-  $('sampleBtn').addEventListener('click', ()=>{
-    const sample = `# Star Citizen global.ini (sample)
-ASD_Quartz=Pristine Quartz
-ASD_Agricium=Agricium Deposit
-ASD_Bexalite=Bexalite Vein
-ASD_Borase=Borase Cluster
-ASD_Copper=Copper Ore
-ASD_Diamond=Diamond Reserve
-ASD_Gold=Gold Nugget
-ASD_Hephaestanite=Hephaestanite
-ASD_Laranite=Laranite Seam
-ASD_Quantainium=Quantainium
-ASD_Taranite=Taranite Ore
-ASD_Tungsten=Tungsten Chunk
-ASD_Unknown,P=Unidentified Material`;
-    loadText(sample, 'sample.ini');
+  function loadSource(text, name){
+    srcName = name.replace(/\.[^.]+$/,'');
+    srcLines = text.replace(/^\uFEFF/,'').split(/\r\n|\r|\n/);
+    if (srcLines.length && srcLines[srcLines.length-1]==='') srcLines.pop();
+    $('dropzone').hidden = true;
+    $('fileMeta').hidden = false;
+    $('rawView').hidden = false;
+    $('fileMeta').innerHTML = `<span><b>${esc(name)}</b></span><span>${srcLines.length.toLocaleString()} lines</span><span>${(text.length/1024).toFixed(0)} KB</span>`;
+    $('srcCount').textContent = name;
+    renderRawView();
+    if (outFormat==='append') scheduleGenerate();
+  }
+  function renderRawView(){
+    const view = $('rawView'); view.innerHTML='';
+    const MAX = 6000;
+    const paint = (start,end) => {
+      let html='';
+      for (let i=start;i<end;i++){
+        const raw = srcLines[i] ?? '';
+        const eq = raw.indexOf('=');
+        if (eq===-1){ html += `<div class="raw-line"><span class="ln">${i+1}</span><span class="lc">${esc(trunc(raw,90))}</span></div>`; continue; }
+        const lhs = raw.slice(0,eq), rhs = raw.slice(eq+1);
+        const dot = colors.get(lhs) ? `<span class="colordot" style="background:${colors.get(lhs)}"></span>` : '';
+        html += `<div class="raw-line"><span class="ln">${i+1}</span><span class="lhs">${dot}${esc(trunc(lhs,46))}</span><span class="eq">=</span><span class="rhs">${esc(trunc(rhs,80))}</span></div>`;
+      }
+      return html;
+    };
+    if (srcLines.length <= MAX){
+      view.innerHTML = paint(0, srcLines.length);
+    } else {
+      const RAW_H = 18;
+      const spacer = document.createElement('div'); spacer.style.position='relative'; spacer.style.width='100%';
+      view.appendChild(spacer);
+      const doPaint = ()=>{
+        const H=view.clientHeight, top=view.scrollTop;
+        const s=Math.max(0,Math.floor(top/RAW_H)-8), e=Math.min(srcLines.length,Math.ceil((top+H)/RAW_H)+8);
+        spacer.style.height=(srcLines.length*RAW_H)+'px';
+        spacer.innerHTML=paint(s,e);
+      };
+      view._paint=doPaint; doPaint(); view.onscroll=()=>requestAnimationFrame(doPaint);
+    }
+  }
+  $('importBtn').addEventListener('click', ()=>{
+    if (!srcLines.length){ toast('Open an INI first'); return; }
+    const re = /^\s*([^=\s][^=]*?)\s*=\s*(#[0-9a-fA-F]{6}|#[0-9a-fA-F]{3})\s*$/;
+    let count=0;
+    srcLines.forEach(l=>{
+      const m = l.match(re); if (!m) return;
+      const name = m[1].trim();
+      const hex = normalizeHex(m[2]);
+      // match against ore names (exact, case-insensitive)
+      const ore = ORES.find(o=>o.n.toLowerCase()===name.toLowerCase());
+      if (ore && hex){ colors.set(ore.n, hex); count++; }
+    });
+    paintRows(); markDirty();
+    toast(count ? `Imported ${count} colors` : 'No matching OreName=#hex lines found');
   });
 
   // ---------- utils ----------
@@ -838,10 +669,9 @@ ASD_Unknown,P=Unidentified Material`;
   // ---------- init ----------
   updateFmtHint();
   applyFilter();
-  updateStats();
-  // re-paint on resize
+  scheduleGenerate();
   let rt;
-  window.addEventListener('resize', ()=>{ clearTimeout(rt); rt=setTimeout(()=>{ if(lines.length) { if ($('rawView')._paint) $('rawView')._paint(); paintRows(); } },120); });
+  window.addEventListener('resize', ()=>{ clearTimeout(rt); rt=setTimeout(()=>{ if(srcLines.length && $('rawView')._paint) $('rawView')._paint(); paintRows(); },120); });
 })();
 </script>
 </body>
