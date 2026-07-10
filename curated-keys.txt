@@ -307,6 +307,8 @@ items_commodities_pitambu
 items_commodities_potassium
 items_commodities_processedFood
 items_commodities_prota
+items_commodities_quantainium
+items_commodities_quantainium_raw
 items_commodities_quartz
 items_commodities_quartz_raw
 items_commodities_rantadung
