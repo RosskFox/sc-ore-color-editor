@@ -92,15 +92,15 @@
   .dropzone .big { font-size:var(--text-base); color:var(--text); font-weight:500; }
   .file-meta { padding:var(--space-2) var(--space-4); font-family:var(--font-mono); font-size:var(--text-xs); color:var(--text-muted); border-bottom:1px solid var(--border-soft); display:flex; gap:var(--space-4); flex-wrap:wrap; }
   .file-meta b { color:var(--text); }
-  .raw-view { flex:1; min-height:0; overflow:auto; font-family:var(--font-mono); font-size:12px; line-height:1.5; padding:var(--space-2) 0; }
-  .raw-line { display:flex; gap:var(--space-3); padding:0 var(--space-4); white-space:pre; }
-  .raw-line:hover { background:var(--row-stripe); }
-  .raw-line .ln { color:var(--text-faint); user-select:none; text-align:right; min-width:4em; flex:none; }
-  .raw-line .lc { color:var(--text-muted); }
-  .raw-line .lhs { color:var(--accent); }
-  .raw-line .eq { color:var(--text-faint); }
-  .raw-line .rhs { color:var(--text); }
-  .raw-line .colordot { display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:4px; vertical-align:middle; border:1px solid var(--border); flex:none; }
+  .loaded-card { margin:var(--space-3); padding:var(--space-4); border:1px solid var(--border); border-radius:var(--radius-md); background:var(--surface-2); display:flex; flex-direction:column; gap:var(--space-3); }
+  .loaded-card .lc-head { display:flex; align-items:center; gap:var(--space-2); }
+  .loaded-card .lc-type { font-size:var(--text-xs); font-weight:700; letter-spacing:0.04em; text-transform:uppercase; color:var(--accent); padding:2px var(--space-2); background:var(--accent-soft); border-radius:var(--radius-sm); }
+  .loaded-card .lc-name { font-size:var(--text-sm); font-weight:600; color:var(--text); word-break:break-all; }
+  .loaded-card .lc-stats { display:grid; grid-template-columns:1fr 1fr; gap:var(--space-2) var(--space-4); }
+  .loaded-card .stat { display:flex; flex-direction:column; gap:1px; }
+  .loaded-card .stat .k { font-size:var(--text-xs); color:var(--text-muted); text-transform:uppercase; letter-spacing:0.03em; }
+  .loaded-card .stat .v { font-family:var(--font-mono); font-size:var(--text-sm); color:var(--text); font-weight:600; }
+  .loaded-card .lc-actions { display:flex; gap:var(--space-2); padding-top:var(--space-2); border-top:1px solid var(--border-soft); }
 
   /* Center */
   .toolbar { display:flex; align-items:center; gap:var(--space-2); padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--border-soft); flex-wrap:wrap; }
@@ -205,7 +205,7 @@
 
   <!-- LEFT -->
   <section class="pane">
-    <div class="pane-head"><h2>Source file</h2><span class="count" id="srcCount">no file</span></div>
+    <div class="pane-head"><h2>Source</h2><span class="count" id="srcCount">nothing loaded</span></div>
     <div class="pane-body">
       <div class="src-actions">
         <button class="mini-btn primary" id="srcOpenBtn" title="Open a .ini from your computer">
@@ -233,21 +233,20 @@
             </button>
             <button class="pack-item" data-pack="exoae2">
               <span class="pack-name">ExoAE Remix2</span>
-              <span class="pack-desc">ExoAE's alternative remix variant</span>
+              <span class="pack-desc">ExoAE alternative remix variant</span>
             </button>
             <button class="pack-item" data-pack="mrkraken">
               <span class="pack-name">MrKraken StarStrings</span>
-              <span class="pack-desc">Mission text, blueprint pools, commodity & UI fixes</span>
+              <span class="pack-desc">Mission text, blueprint pools, commodity and UI fixes</span>
             </button>
           </div>
         </div>
       </div>
+      <div class="loaded-card" id="loadedCard" hidden></div>
       <div class="dropzone" id="dropzone">
         <p class="big">Drop an .ini here</p>
         <p>or use the buttons above to open a local file or load a community pack</p>
       </div>
-      <div class="file-meta" id="fileMeta" hidden></div>
-      <div class="raw-view" id="rawView" hidden></div>
     </div>
   </section>
 
@@ -298,9 +297,8 @@
     </div>
     <div class="out-format">
       <div class="seg" id="fmtSeg">
-        <button class="active" data-fmt="modify">Modify values</button>
-        <button data-fmt="map">Color map only</button>
-        <button data-fmt="section">[Colors]</button>
+        <button class="active" data-fmt="full">Full output</button>
+        <button data-fmt="changes">Changes only</button>
       </div>
       <span id="fmtHint"></span>
       <span class="out-stale" id="staleTag" hidden>● stale</span>
@@ -325,9 +323,13 @@
   let colors = new Map(); // key -> #RRGGBB  (only explicitly colored keys)
   let filterMode = 'all';
   const HIDE_DESC = true;   // permanently hide keys containing '_desc' (description text)
-  let outFormat = 'modify';
+  let outFormat = 'full';
   let dirty = false, renderPending = false, idleGen;
+  let generatedText = '';   // true CRLF string (textarea .value normalizes to LF)
+  function ensureOutput(){ if (dirty){ clearTimeout(idleGen); generatedText = generate(); $('output').value = generatedText; dirty=false; $('staleTag').hidden=true; updateStats(); } }
   let srcName = '';
+  let srcType = 'Local file';   // 'Local file' | 'Community pack' | 'Merged known keys' | 'Sample'
+  let srcText = '';             // raw loaded text (for re-rendering the source card)
 
   // ---------- Categories (loaded from StarMeld categories.json) ----------
   let catGroups = [];        // [{name, categories:[{name, patterns:[re...], desc}]}]
@@ -497,18 +499,16 @@
   function loadText(text, name){
     parse(text);
     srcName = name.replace(/\.[^.]+$/, '') || 'source';
+    srcText = text;
     // auto-import: any existing Key=#hex lines become the assigned colors
     const imp = importColorsFromEntries();
     buildCenterList();
     $('dropzone').hidden = true;
     $('emptyState').hidden = centerList.length>0 || entries.length>0;
-    $('fileMeta').hidden = false;
-    $('rawView').hidden = false;
-    $('fileMeta').innerHTML = `<span><b>${esc(name)}</b></span><span>${entries.length.toLocaleString()} lines</span><span>${entries.filter(e=>e.hasEq).length.toLocaleString()} keys</span><span>${(text.length/1024).toFixed(0)} KB</span>` + (imp? `<span style="color:var(--accent)">${imp} colors imported</span>`:'');
-    $('srcCount').textContent = name;
+    renderLoadedCard(name, text, imp);
+    $('srcCount').textContent = entries.filter(e=>e.hasEq).length.toLocaleString()+' keys';
     $('search').disabled = false;
     ['autoBtn','randBtn','clearBtn'].forEach(id=>$(id).disabled=false);
-    renderRawView();
     recomputeCatCounts();
     buildGroupDropdown();
     // reset category selection on new file
@@ -517,6 +517,24 @@
     scheduleGenerate();
     updateStats();
     if (imp) toast(`Parsed ${entries.filter(e=>e.hasEq).length.toLocaleString()} keys — ${imp} colors imported`);
+  }
+
+  function renderLoadedCard(name, text, imp){
+    const lines = entries.length;
+    const keys = entries.filter(e=>e.hasEq).length;
+    const kb = (text.length/1024).toFixed(0);
+    $('loadedCard').hidden = false;
+    $('loadedCard').innerHTML = `
+      <div class="lc-head">
+        <span class="lc-type">${esc(srcType)}</span>
+        <span class="lc-name">${esc(name)}</span>
+      </div>
+      <div class="lc-stats">
+        <div class="stat"><span class="k">Lines</span><span class="v">${lines.toLocaleString()}</span></div>
+        <div class="stat"><span class="k">Keys</span><span class="v">${keys.toLocaleString()}</span></div>
+        <div class="stat"><span class="k">Size</span><span class="v">${kb} KB</span></div>
+        <div class="stat"><span class="k">Colors</span><span class="v">${imp? imp.toLocaleString() : '0 imported'}</span></div>
+      </div>`;
   }
 
   function importColorsFromEntries(){
@@ -529,35 +547,26 @@
     return n;
   }
 
-  // ---------- Raw view (virtualized for large files) ----------
-  function renderRawView(){
-    const view = $('rawView'); view.innerHTML='';
-    const MAX = 6000;
-    const paint = (start,end) => {
-      let html='';
-      for (let i=start;i<end;i++){
-        const e = entries[i]; if(!e) break;
-        if (!e.hasEq){ html += `<div class="raw-line"><span class="ln">${i+1}</span><span class="lc">${esc(trunc(e.raw,120))}</span></div>`; continue; }
+  // ---------- Output generation ----------
+  function generate(){
+    const out = [];
+    const fileKeys = new Set();
+    if (outFormat==='full'){
+      // full file: colored real keys set to key=#hex, rest unchanged
+      for (const e of entries){
+        if (!e.hasEq){ out.push(e.raw); continue; }
+        fileKeys.add(e.key);
         const c = colors.get(e.key);
-        const dot = c ? `<span class="colordot" style="background:${c}"></span>` : '';
-        html += `<div class="raw-line"><span class="ln">${i+1}</span><span class="lhs">${dot}${esc(trunc(e.key,50))}</span><span class="eq">=</span><span class="rhs">${esc(trunc(e.value,90))}</span></div>`;
+        out.push(c != null ? `${e.key}=${c}` : e.raw);
       }
-      return html;
-    };
-    if (entries.length <= MAX){
-      view.innerHTML = paint(0, entries.length);
-    } else {
-      const RAW_H = 18;
-      const spacer = document.createElement('div'); spacer.style.position='relative'; spacer.style.width='100%';
-      view.appendChild(spacer);
-      const doPaint = ()=>{
-        const H=view.clientHeight, top=view.scrollTop;
-        const s=Math.max(0,Math.floor(top/RAW_H)-8), e=Math.min(entries.length,Math.ceil((top+H)/RAW_H)+8);
-        spacer.style.height=(entries.length*RAW_H)+'px';
-        spacer.innerHTML=paint(s,e);
-      };
-      view._paint=doPaint; doPaint(); view.onscroll=()=>requestAnimationFrame(doPaint);
+      // append colored keys not present in the file (virtual known keys)
+      for (const [k,c] of colors){ if (!fileKeys.has(k) && knownValues.has(k)) out.push(`${k}=${c}`); }
+      return out.join('\r\n');
     }
+    // changes only: just the colored keys (in-file + virtual)
+    for (const e of entries){ if (e.hasEq && colors.has(e.key)){ fileKeys.add(e.key); out.push(`${e.key}=${colors.get(e.key)}`); } }
+    for (const [k,c] of colors){ if (!fileKeys.has(k) && knownValues.has(k)) out.push(`${k}=${c}`); }
+    return out.join('\r\n');
   }
 
   // ---------- Filtering ----------
@@ -710,36 +719,10 @@
   }
 
   // ---------- Output ----------
-  function generate(){
-    const out = [];
-    const fileKeys = new Set();
-    if (outFormat==='modify'){
-      // full file: colored real keys set to key=#hex, rest unchanged
-      for (const e of entries){
-        if (!e.hasEq){ out.push(e.raw); continue; }
-        fileKeys.add(e.key);
-        const c = colors.get(e.key);
-        out.push(c != null ? `${e.key}=${c}` : e.raw);
-      }
-      // append colored keys not present in the file (virtual known keys)
-      for (const [k,c] of colors){ if (!fileKeys.has(k) && knownValues.has(k)) out.push(`${k}=${c}`); }
-      return out.join('\r\n');
-    }
-    if (outFormat==='map'){
-      for (const e of entries){ if (e.hasEq && colors.has(e.key)){ fileKeys.add(e.key); out.push(`${e.key}=${colors.get(e.key)}`); } }
-      for (const [k,c] of colors){ if (!fileKeys.has(k) && knownValues.has(k)) out.push(`${k}=${c}`); }
-      return out.join('\r\n');
-    }
-    // section
-    out.push('[Colors]');
-    for (const e of entries){ if (e.hasEq && colors.has(e.key)){ fileKeys.add(e.key); out.push(`${e.key}=${colors.get(e.key)}`); } }
-    for (const [k,c] of colors){ if (!fileKeys.has(k) && knownValues.has(k)) out.push(`${k}=${c}`); }
-    return out.join('\r\n');
-  }
   function scheduleGenerate(){
     dirty = true; $('staleTag').hidden = false;
     if (renderPending) return; renderPending = true;
-    requestAnimationFrame(()=>{ renderPending=false; $('output').value = generate(); dirty=false; $('staleTag').hidden=true; updateStats(); });
+    requestAnimationFrame(()=>{ renderPending=false; generatedText = generate(); $('output').value = generatedText; dirty=false; $('staleTag').hidden=true; updateStats(); });
   }
   function markDirty(){ scheduleGenerate(); }
   document.querySelectorAll('#fmtSeg button').forEach(b=>{
@@ -749,9 +732,8 @@
     });
   });
   function updateFmtHint(){
-    $('fmtHint').innerHTML = outFormat==='modify' ? 'Full file — colored keys set to <code>key=#hex</code>; colored keys not in your file are appended.'
-      : outFormat==='map' ? 'Only colored keys as <code>key=#hex</code> (in-file + virtual).'
-      : '<code>[Colors]</code> section + all colored keys (in-file + virtual).';
+    $('fmtHint').innerHTML = outFormat==='full' ? 'Full file — colored keys set to <code>key=#hex</code>; colored keys not in your file are appended.'
+      : 'Only the keys you colored (in-file + virtual) as <code>key=#hex</code>.';
   }
   function updateStats(){
     let colored=0; colors.forEach(()=>colored++);
@@ -761,9 +743,10 @@
   }
 
   // ---------- Copy / download ----------
+  function outputText(){ return generatedText || $('output').value; }
   $('copyBtn').addEventListener('click', async ()=>{
     ensureOutput();
-    const text = $('output').value;
+    const text = outputText();
     if (!text){ toast('Nothing to copy'); return; }
     try { await navigator.clipboard.writeText(text); }
     catch(_){ const ta=$('output'); ta.focus(); ta.select(); document.execCommand('copy'); }
@@ -773,11 +756,11 @@
   });
   $('dlBtn').addEventListener('click', ()=>{
     ensureOutput();
-    const text=$('output').value; if (!text){ toast('Nothing to download'); return; }
+    const text=outputText(); if (!text){ toast('Nothing to download'); return; }
     const bom = new Uint8Array([0xEF,0xBB,0xBF]);
     const blob=new Blob([bom, new TextEncoder().encode(text)],{type:'text/plain;charset=utf-8'});
     const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-    a.download = (outFormat==='modify' ? srcName : 'colors') + '.ini';
+    a.download = (outFormat==='full' ? srcName : (srcName||'colors')+'-changes') + '.ini';
     a.click(); URL.revokeObjectURL(a.href);
   });
 
@@ -786,6 +769,7 @@
   $('srcOpenBtn').addEventListener('click', ()=>$('fileInput').click());
   $('fileInput').addEventListener('change', e=>{
     const f=e.target.files[0]; if(!f) return;
+    srcType = 'Local file';
     const r=new FileReader(); r.onload=()=>loadText(String(r.result), f.name); r.readAsText(f);
     e.target.value='';
   });
@@ -794,6 +778,7 @@
   ['dragleave','drop'].forEach(ev=>window.addEventListener(ev,e=>{e.preventDefault(); dz.classList.remove('drag');}));
   window.addEventListener('drop', e=>{
     e.preventDefault(); const f=e.dataTransfer.files[0]; if(!f) return;
+    srcType = 'Local file';
     const r=new FileReader(); r.onload=()=>loadText(String(r.result), f.name); r.readAsText(f);
   });
 
@@ -809,6 +794,7 @@
     if (packLoading) return;
     const url = PACK_URLS[packId]; const name = PACK_NAMES[packId]; if (!url) return;
     packLoading = true;
+    srcType = 'Community pack';
     showLoadingState('Loading '+name+'…');
     document.querySelectorAll('.pack-item').forEach(b=>b.classList.add('loading'));
     try {
@@ -840,7 +826,8 @@
   if (impBtn) impBtn.addEventListener('click', ()=>{
     if (!entries.length){ toast('Open an INI first'); return; }
     const n = importColorsFromEntries();
-    renderRawView(); paintRows(); markDirty();
+    paintRows(); markDirty();
+    if (entries.length && srcText) renderLoadedCard(srcName||'source', srcText, n);
     toast(n ? `Imported ${n} colors` : 'No Key=#hex lines found');
   });
 
@@ -857,6 +844,7 @@
       buildKnownValues(text);          // always populate the reference dictionary
       if (!entries.length){
         // no file loaded yet → use known-keys as the default source file
+        srcType = 'Merged known keys';
         loadText(text, 'known-keys.ini');
       } else {
         // a file/pack is already loaded → just add the now-available virtual keys
@@ -888,6 +876,7 @@
 
   // ---------- Sample ----------
   $('sampleBtn').addEventListener('click', ()=>{
+    srcType = 'Sample';
     const sample = `# sample.ini
 items_commodities_Agricium=Agricium
 items_commodities_Bexalite=Bexalite
@@ -917,7 +906,7 @@ item_NameQDRV_Smile_Drive_Quantum=Quantum Drive`;
   // auto-load the known key list (merged from the 4 community language packs)
   loadKnownKeys();
   let rt;
-  window.addEventListener('resize', ()=>{ clearTimeout(rt); rt=setTimeout(()=>{ if(entries.length && $('rawView')._paint) $('rawView')._paint(); paintRows(); },120); });
+  window.addEventListener('resize', ()=>{ clearTimeout(rt); rt=setTimeout(paintRows,120); });
 })();
 </script>
 </body>
