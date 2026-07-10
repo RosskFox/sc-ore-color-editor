@@ -950,9 +950,8 @@
       const text = await res.text();
       buildKnownValues(text);          // always populate the reference dictionary
       if (!entries.length){
-        // no file loaded yet → use known-keys as the default source file
-        srcType = 'Merged known keys'; srcPack = '';
-        loadText(text, 'known-keys.ini');
+        // no file loaded yet → default to the MrKraken StarStrings community pack
+        loadPack('mrkraken');
       } else {
         // a file/pack is already loaded → just add the now-available virtual keys
         buildCenterList(); recomputeCatCounts(); buildGroupDropdown(); applyFilter();
