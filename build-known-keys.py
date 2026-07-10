@@ -21,6 +21,7 @@ The output format matches what the app's buildKnownValues() expects:
 import json
 import sys
 import urllib.request
+from datetime import datetime, timezone
 
 # Same packs / URLs the app uses (index.html PACK_URLS), in priority order.
 # Stock is first so its values are preferred for any shared key.
@@ -113,8 +114,18 @@ def main():
     with open(JSON_OUT, "w", encoding="utf-8", newline="\n") as f:
         json.dump([k for k, _ in sorted_keys], f, ensure_ascii=False, separators=(",", ":"))
 
+    # Write metadata: timestamp + counts, so the app can show last-refreshed
+    meta = {
+        "refreshed": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "keys": len(sorted_keys),
+        "packs": per_pack,
+    }
+    with open("known-keys.meta.json", "w", encoding="utf-8", newline="\n") as f:
+        json.dump(meta, f, ensure_ascii=False, indent=2)
+
     print(f"  wrote {INI_OUT} ({len(sorted_keys):,} keys)")
     print(f"  wrote {JSON_OUT}")
+    print(f"  wrote known-keys.meta.json")
     print("\nDone. Commit and push to update the live site.")
 
 

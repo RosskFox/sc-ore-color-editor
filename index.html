@@ -51,6 +51,9 @@
   .logo { width:32px; height:32px; flex:none; color:var(--accent); }
   .brand h1 { font-size:var(--text-lg); font-weight:700; letter-spacing:-0.01em; line-height:1; }
   .brand .sub { font-size:var(--text-xs); color:var(--text-muted); font-family:var(--font-mono); margin-top:2px; }
+  .kk-refresh { display:inline-flex; align-items:center; gap:4px; margin-left:var(--space-2); padding:1px 7px; font-size:10px; font-family:var(--font-mono); color:var(--text-muted); background:var(--surface-2); border:1px solid var(--border-soft); border-radius:999px; cursor:help; white-space:nowrap; }
+  .kk-refresh .dot { width:6px; height:6px; border-radius:50%; background:var(--success,#22c55e); flex:none; }
+  .kk-refresh.pending .dot { background:var(--text-faint); }
   .file-btn { display:inline-flex; align-items:center; gap:var(--space-2); padding:var(--space-2) var(--space-4); background:var(--accent); color:var(--on-accent); font-weight:700; font-size:var(--text-sm); border-radius:var(--radius-md); box-shadow:0 1px 2px rgba(0,0,0,0.25); }
   .file-btn:hover { background:var(--accent-hover); }
   .file-btn.ghost { background:transparent; color:var(--text); border:1px solid var(--border); box-shadow:none; }
@@ -192,7 +195,9 @@
     </svg>
     <div>
       <h1>INI Color Editor</h1>
-      <div class="sub">parse real keys · pick a color per key · write back</div>
+      <div class="sub">parse real keys · pick a color per key · write back
+        <span class="kk-refresh pending" id="kkRefresh" hidden title="Loading…"><span class="dot"></span><span id="kkRefreshText">known-keys…</span></span>
+      </div>
     </div>
   </div>
   <div class="stats" id="stats">
@@ -938,11 +943,35 @@ item_NameQDRV_Smile_Drive_Quantum=Quantum Drive`;
   function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2200); }
 
   // ---------- init ----------
+  // ---------- Known-keys refresh metadata ----------
+  async function loadKnownKeysMeta(){
+    try {
+      const res = await fetch('known-keys.meta.json', {cache:'no-cache'});
+      if (!res.ok) throw new Error('HTTP '+res.status);
+      const m = await res.json();
+      const when = m.refreshed ? fmtMetaDate(m.refreshed) : 'unknown';
+      $('kkRefreshText').textContent = 'known-keys refreshed '+when;
+      const packs = m.packs ? Object.entries(m.packs).map(([k,v])=>k+': '+v.toLocaleString()).join('  ·  ') : '';
+      $('kkRefresh').title = 'Merged from '+m.keys.toLocaleString()+' keys across 5 packs'+(packs?'\n'+packs:'');
+      $('kkRefresh').classList.remove('pending');
+      $('kkRefresh').hidden = false;
+    } catch(e){
+      $('kkRefresh').hidden = true;   // hide if meta unavailable
+    }
+  }
+  function fmtMetaDate(iso){
+    const d = new Date(iso);
+    if (isNaN(d)) return 'unknown';
+    const dtf = new Intl.DateTimeFormat(undefined, {month:'short', day:'numeric', year:'numeric'});
+    return dtf.format(d);
+  }
+
   updateFmtHint();
   updateStats();
   loadCategories();
-  // auto-load the known key list (merged from the 4 community language packs)
+  // auto-load the known key list (merged from the 5 community language packs)
   loadKnownKeys();
+  loadKnownKeysMeta();
   let rt;
   window.addEventListener('resize', ()=>{ clearTimeout(rt); rt=setTimeout(paintRows,120); });
 })();

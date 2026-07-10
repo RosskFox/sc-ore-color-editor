@@ -79,7 +79,7 @@ python3 "$REPO_DIR/build-known-keys.py"
 # persist new SHAs (before commit so the file is part of the change)
 printf '%s\n' "${NEWLINES[@]}" > "$SHAS_FILE"
 
-git add known-keys.ini known-keys.json .pack-shas
+git add known-keys.ini known-keys.json known-keys.meta.json .pack-shas
 git commit -q -m "Auto-refresh known-keys (community pack update detected)" || {
   echo "Nothing to commit despite detected changes (build output unchanged)."
   exit 0
