@@ -103,6 +103,14 @@
   .chip:hover { border-color:var(--accent); color:var(--text); }
   .chip.active { color:var(--text); border-color:var(--accent); background:var(--accent-soft); }
 
+  .cat-bar { display:flex; align-items:center; gap:var(--space-2); padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--border-soft); }
+  .cat-bar .label { font-size:var(--text-xs); color:var(--text-faint); text-transform:uppercase; letter-spacing:0.05em; white-space:nowrap; }
+  .cat-select { flex:1; min-width:0; font-size:var(--text-xs); padding:var(--space-1) var(--space-2); border:1px solid var(--border); border-radius:var(--radius-md); background:var(--surface-3); color:var(--text); }
+  .cat-sub { display:flex; gap:var(--space-1); padding:var(--space-1) var(--space-3) var(--space-2); flex-wrap:wrap; max-height:84px; overflow-y:auto; border-bottom:1px solid var(--border-soft); }
+  .cat-sub:empty { display:none; }
+  .cat-sub .chip { padding:2px var(--space-2); font-size:11px; }
+  .cat-sub .chip .cnt { color:var(--text-faint); margin-left:4px; font-size:10px; }
+
   .list-wrap { flex:1; min-height:0; overflow:hidden; position:relative; }
   .vscroll { height:100%; overflow-y:auto; overflow-anchor:none; }
   .vspacer { position:relative; width:100%; }
@@ -212,6 +220,11 @@
         <button class="chip" data-filter="colored">Colored</button>
         <button class="chip" data-filter="uncolored">Uncolored</button>
       </div>
+      <div class="cat-bar">
+        <span class="label">Category</span>
+        <select class="cat-select" id="catGroup" disabled><option>—</option></select>
+      </div>
+      <div class="cat-sub" id="catSub"></div>
       <div class="list-wrap">
         <div class="vscroll" id="vscroll"><div class="vspacer" id="vspacer"></div></div>
       </div>
@@ -264,6 +277,85 @@
   let dirty = false, renderPending = false, idleGen;
   let srcName = '';
 
+  // ---------- Categories (loaded from StarMeld categories.json) ----------
+  let catGroups = [];        // [{name, categories:[{name, patterns:[re...], desc}]}]
+  let catCompiled = [];      // [{gIdx, cIdx, name, tests:[(key)=>bool]}]
+  let keyCat = new Map();    // key -> "gIdx:cIdx" (computed lazily per key)
+  let catCounts = null;      // Map "gIdx:cIdx" -> count
+  let selGroup = null;       // group index or null (all)
+  let selCat = null;        // "gIdx:cIdx" or null
+
+  async function loadCategories(){
+    try {
+      const res = await fetch('categories.json');
+      if (!res.ok) return;
+      const data = await res.json();
+      catGroups = data.groups || [];
+      catCompiled = [];
+      const catchAll = data.catchAll || 'Other';
+      for (let g=0; g<catGroups.length; g++){
+        for (let c=0; c<catGroups[g].categories.length; c++){
+          const cat = catGroups[g].categories[c];
+          const tests = (cat.patterns||[]).map(p => { try { return new RegExp(p); } catch(_){ return null; } }).filter(Boolean);
+          catCompiled.push({ gIdx:g, cIdx:c, name:cat.name, gName:catGroups[g].name, tests });
+        }
+      }
+      // add a synthetic "Other" bucket as the catch-all group
+      catGroups.push({ name: catchAll, categories: [] });
+      buildGroupDropdown();
+    } catch(e){ console.warn('categories load failed', e); }
+  }
+  function categorizeKey(key){
+    if (keyCat.has(key)) return keyCat.get(key);
+    let res = null;
+    for (const c of catCompiled){
+      if (c.tests.some(t => t.test(key))){ res = c.gIdx+':'+c.cIdx; break; }
+    }
+    if (res === null) res = (catGroups.length-1)+':0'; // catchAll group
+    keyCat.set(key, res);
+    return res;
+  }
+  function recomputeCatCounts(){
+    catCounts = new Map();
+    for (const e of entries){ if (!e.hasEq) continue; const c = categorizeKey(e.key); catCounts.set(c, (catCounts.get(c)||0)+1); }
+    // catchAll group count
+    const catchKey = (catGroups.length-1)+':0';
+    // (already counted into catchKey via categorizeKey returning it)
+  }
+  function buildGroupDropdown(){
+    const sel = $('catGroup'); sel.innerHTML = '';
+    const all = document.createElement('option'); all.value=''; all.textContent='All categories'; sel.appendChild(all);
+    catGroups.forEach((g, i) => {
+      const cnt = groupCount(i);
+      if (!cnt) return; // hide empty groups
+      const o = document.createElement('option'); o.value=i; o.textContent = `${g.name} (${cnt.toLocaleString()})`; sel.appendChild(o);
+    });
+    sel.disabled = false;
+  }
+  function groupCount(gIdx){
+    let n=0; catCounts.forEach((v,k)=>{ if (k.startsWith(gIdx+':')) n+=v; }); return n;
+  }
+  function buildSubChips(gIdx){
+    const wrap = $('catSub'); wrap.innerHTML='';
+    if (gIdx===null||gIdx===undefined||gIdx==='') { wrap.innerHTML=''; return; }
+    gIdx = +gIdx;
+    const g = catGroups[gIdx]; if (!g) return;
+    if (gIdx === catGroups.length-1){ // catchAll: no sub-cats, single chip
+      const b=document.createElement('button'); b.className='chip'; b.dataset.cat=(gIdx+':0'); b.innerHTML=`${g.name} <span class="cnt">${(catCounts.get(gIdx+':0')||0).toLocaleString()}</span>`; 
+      if (selCat===(gIdx+':0')) b.classList.add('active');
+      wrap.appendChild(b); return;
+    }
+    g.categories.forEach((cat, c)=>{
+      const key=gIdx+':'+c;
+      const cnt=catCounts.get(key)||0;
+      if (!cnt) return;
+      const b=document.createElement('button'); b.className='chip'; b.dataset.cat=key;
+      b.innerHTML=`${cat.name} <span class="cnt">${cnt.toLocaleString()}</span>`;
+      if (selCat===key) b.classList.add('active');
+      wrap.appendChild(b);
+    });
+  }
+
   // ---------- Theme ----------
   (function(){
     let t = matchMedia('(prefers-color-scheme:dark)').matches ? 'dark':'light';
@@ -304,6 +396,10 @@
     $('search').disabled = false;
     ['autoBtn','randBtn','clearBtn'].forEach(id=>$(id).disabled=false);
     renderRawView();
+    recomputeCatCounts();
+    buildGroupDropdown();
+    // reset category selection on new file
+    selGroup = null; selCat = null; $('catGroup').value=''; $('catSub').innerHTML='';
     applyFilter();
     scheduleGenerate();
     updateStats();
@@ -355,12 +451,19 @@
   function applyFilter(){
     const q = $('search').value.trim().toLowerCase();
     filtered = [];
+    const useCat = selCat !== null && catCounts;
+    const useGroup = selGroup !== null && catCounts;
     for (let i=0;i<entries.length;i++){
       const e = entries[i];
       if (!e.hasEq) continue;
       const colored = colors.has(e.key);
       if (filterMode==='colored' && !colored) continue;
       if (filterMode==='uncolored' && colored) continue;
+      if (useCat || useGroup){
+        const c = categorizeKey(e.key);
+        if (useCat && c !== selCat) continue;
+        else if (!useCat && useGroup && !c.startsWith(selGroup+':')) continue;
+      }
       if (q){ if (e.key.toLowerCase().indexOf(q)===-1 && (e.value||'').toLowerCase().indexOf(q)===-1) continue; }
       filtered.push(i);
     }
@@ -602,6 +705,21 @@
   }
   $('knownBtn').addEventListener('click', loadKnownKeys);
 
+  // ---------- Category filter events ----------
+  $('catGroup').addEventListener('change', e=>{
+    const v = e.target.value;
+    selGroup = v===''?null:+v;
+    selCat = null;
+    buildSubChips(selGroup);
+    applyFilter();
+  });
+  $('catSub').addEventListener('click', e=>{
+    const b = e.target.closest('.chip'); if (!b || !b.dataset.cat) return;
+    if (selCat === b.dataset.cat){ selCat = null; b.classList.remove('active'); }   // toggle off
+    else { selCat = b.dataset.cat; [...$('catSub').children].forEach(c=>c.classList.remove('active')); b.classList.add('active'); }
+    applyFilter();
+  });
+
   // ---------- Sample ----------
   $('sampleBtn').addEventListener('click', ()=>{
     const sample = `# sample.ini
@@ -629,6 +747,7 @@ item_NameQDRV_Smile_Drive_Quantum=Quantum Drive`;
   // ---------- init ----------
   updateFmtHint();
   updateStats();
+  loadCategories();
   // auto-load the known key list (merged from the 4 community language packs)
   loadKnownKeys();
   let rt;
