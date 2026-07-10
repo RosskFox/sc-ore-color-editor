@@ -284,6 +284,14 @@
   let catCounts = null;      // Map "gIdx:cIdx" -> count
   let selGroup = null;       // group index or null (all)
   let selCat = null;        // "gIdx:cIdx" or null
+  // Only these category groups are editable in the center pane.
+  // The full file is still parsed & written back; non-editable keys are hidden from editing.
+  const EDITABLE_GROUP_NAMES = new Set(['Ship Components','Ordnance','Vehicles','Items']);
+  let editableCount = 0;     // count of editable keys (for stats denominator)
+  function isEditableKey(key){
+    const c = categorizeKey(key); const g = +c.split(':')[0];
+    const grp = catGroups[g]; return grp && EDITABLE_GROUP_NAMES.has(grp.name);
+  }
 
   async function loadCategories(){
     try {
@@ -317,17 +325,16 @@
   }
   function recomputeCatCounts(){
     catCounts = new Map();
-    for (const e of entries){ if (!e.hasEq) continue; const c = categorizeKey(e.key); catCounts.set(c, (catCounts.get(c)||0)+1); }
-    // catchAll group count
-    const catchKey = (catGroups.length-1)+':0';
-    // (already counted into catchKey via categorizeKey returning it)
+    editableCount = 0;
+    for (const e of entries){ if (!e.hasEq) continue; const c = categorizeKey(e.key); catCounts.set(c, (catCounts.get(c)||0)+1); if (isEditableKey(e.key)) editableCount++; }
   }
   function buildGroupDropdown(){
     const sel = $('catGroup'); sel.innerHTML = '';
     const all = document.createElement('option'); all.value=''; all.textContent='All categories'; sel.appendChild(all);
     catGroups.forEach((g, i) => {
+      if (!EDITABLE_GROUP_NAMES.has(g.name)) return;       // only editable groups appear
       const cnt = groupCount(i);
-      if (!cnt) return; // hide empty groups
+      if (!cnt) return; // hide empty
       const o = document.createElement('option'); o.value=i; o.textContent = `${g.name} (${cnt.toLocaleString()})`; sel.appendChild(o);
     });
     sel.disabled = false;
@@ -456,6 +463,7 @@
     for (let i=0;i<entries.length;i++){
       const e = entries[i];
       if (!e.hasEq) continue;
+      if (!isEditableKey(e.key)) continue;   // center pane is limited to editable groups
       const colored = colors.has(e.key);
       if (filterMode==='colored' && !colored) continue;
       if (filterMode==='uncolored' && colored) continue;
@@ -467,7 +475,7 @@
       if (q){ if (e.key.toLowerCase().indexOf(q)===-1 && (e.value||'').toLowerCase().indexOf(q)===-1) continue; }
       filtered.push(i);
     }
-    $('centerCount').textContent = entries.length ? `${filtered.length.toLocaleString()} / ${entries.filter(e=>e.hasEq).length.toLocaleString()}` : '—';
+    $('centerCount').textContent = entries.length ? `${filtered.length.toLocaleString()} / ${editableCount.toLocaleString()}` : '—';
     $('emptyState').hidden = filtered.length>0 || entries.length===0;
     $('vscroll').scrollTop = 0;
     layoutList();
