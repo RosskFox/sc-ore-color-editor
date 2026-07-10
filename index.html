@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Ore Color INI Editor — Star Citizen</title>
+<title>INI Color Editor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
@@ -14,12 +14,10 @@
     --text-sm: clamp(0.8125rem, 0.76rem + 0.28vw, 0.9rem);
     --text-base: clamp(0.875rem, 0.83rem + 0.22vw, 0.975rem);
     --text-lg: clamp(1.05rem, 0.95rem + 0.5vw, 1.2rem);
-    --text-xl: clamp(1.3rem, 1.1rem + 1vw, 1.7rem);
     --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem;
     --space-4: 1rem; --space-5: 1.25rem; --space-6: 1.5rem;
-    --space-8: 2rem; --space-10: 2.5rem; --space-12: 3rem;
+    --space-8: 2rem; --space-12: 3rem;
     --radius-sm: 0.375rem; --radius-md: 0.5rem; --radius-lg: 0.75rem;
-    --radius-full: 9999px;
     --transition: 180ms cubic-bezier(0.16,1,0.3,1);
     --font-body: 'Satoshi','Inter',system-ui,sans-serif;
     --font-mono: 'JetBrains Mono','SFMono-Regular',ui-monospace,monospace;
@@ -31,8 +29,6 @@
     --accent: #2bb3b3; --accent-hover: #3fc7c7; --accent-soft: rgba(43,179,179,0.16);
     --on-accent: #001515;
     --danger: #e06464; --success: #5fb84a; --row-stripe: rgba(255,255,255,0.02);
-    --chip-ship: #5aa9e0; --chip-hand: #e09a3f; --chip-ground: #a9b84a;
-    --chip-harvest: #5fcd6e; --chip-creature: #e0646a; --chip-rare: #e8c14a; --chip-pyro: #e8552a;
   }
   [data-theme='light'] {
     --bg: #ffffff; --surface: #ffffff; --surface-2: #f5f5f5; --surface-3: #ededed;
@@ -41,12 +37,10 @@
     --accent: #0e8a8a; --accent-hover: #0a6e6e; --accent-soft: rgba(14,138,138,0.12);
     --on-accent: #ffffff;
     --danger: #c64545; --success: #3f8a28; --row-stripe: rgba(0,0,0,0.02);
-    --chip-ship: #2f6fa3; --chip-hand: #b5641e; --chip-ground: #6b7a2a;
-    --chip-harvest: #2f8a3f; --chip-creature: #a8443f; --chip-rare: #9c7510; --chip-pyro: #c44520;
   }
   *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
   html { -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
-  body { min-height:100dvh; line-height:1.55; font-family:var(--font-body); font-size:var(--text-base); color:var(--text); background:var(--bg); display:flex; flex-direction:column; }
+  body { height:100dvh; overflow:hidden; line-height:1.55; font-family:var(--font-body); font-size:var(--text-base); color:var(--text); background:var(--bg); display:flex; flex-direction:column; }
   button { cursor:pointer; background:none; border:none; color:inherit; font:inherit; }
   input,textarea,select { font:inherit; color:inherit; }
   a,button,input,textarea,select { transition:color var(--transition),background var(--transition),border-color var(--transition),box-shadow var(--transition); }
@@ -54,7 +48,7 @@
 
   .topbar { display:flex; align-items:center; gap:var(--space-4); padding:var(--space-3) var(--space-5); background:var(--surface); border-bottom:1px solid var(--border); flex-wrap:wrap; }
   .brand { display:flex; align-items:center; gap:var(--space-3); margin-right:auto; }
-  .logo { width:34px; height:34px; flex:none; color:var(--accent); }
+  .logo { width:32px; height:32px; flex:none; color:var(--accent); }
   .brand h1 { font-size:var(--text-lg); font-weight:700; letter-spacing:-0.01em; line-height:1; }
   .brand .sub { font-size:var(--text-xs); color:var(--text-muted); font-family:var(--font-mono); margin-top:2px; }
   .file-btn { display:inline-flex; align-items:center; gap:var(--space-2); padding:var(--space-2) var(--space-4); background:var(--accent); color:var(--on-accent); font-weight:700; font-size:var(--text-sm); border-radius:var(--radius-md); box-shadow:0 1px 2px rgba(0,0,0,0.25); }
@@ -66,7 +60,7 @@
   .stats { display:flex; gap:var(--space-4); font-size:var(--text-xs); color:var(--text-muted); font-family:var(--font-mono); }
   .stats b { color:var(--text); font-weight:700; }
 
-  .workspace { flex:1; display:grid; grid-template-columns: 0.9fr 1.3fr 1.1fr; min-height:0; }
+  .workspace { flex:1; display:grid; grid-template-columns: 0.9fr 1.3fr 1.1fr; min-height:0; overflow:hidden; }
   .pane { display:flex; flex-direction:column; min-width:0; min-height:0; background:var(--surface); border-right:1px solid var(--border); }
   .pane:last-child { border-right:none; }
   .pane-head { display:flex; align-items:center; gap:var(--space-3); padding:var(--space-3) var(--space-4); border-bottom:1px solid var(--border); background:var(--surface-2); flex-wrap:wrap; }
@@ -86,12 +80,12 @@
   .raw-view { flex:1; min-height:0; overflow:auto; font-family:var(--font-mono); font-size:12px; line-height:1.5; padding:var(--space-2) 0; }
   .raw-line { display:flex; gap:var(--space-3); padding:0 var(--space-4); white-space:pre; }
   .raw-line:hover { background:var(--row-stripe); }
-  .raw-line .ln { color:var(--text-faint); user-select:none; text-align:right; min-width:3.5em; flex:none; }
+  .raw-line .ln { color:var(--text-faint); user-select:none; text-align:right; min-width:4em; flex:none; }
   .raw-line .lc { color:var(--text-muted); }
   .raw-line .lhs { color:var(--accent); }
   .raw-line .eq { color:var(--text-faint); }
   .raw-line .rhs { color:var(--text); }
-  .raw-line .colordot { display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:4px; vertical-align:middle; border:1px solid var(--border); }
+  .raw-line .colordot { display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:4px; vertical-align:middle; border:1px solid var(--border); flex:none; }
 
   /* Center */
   .toolbar { display:flex; align-items:center; gap:var(--space-2); padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--border-soft); flex-wrap:wrap; }
@@ -101,41 +95,32 @@
   .search input::placeholder { color:var(--text-faint); }
   .mini-btn { padding:var(--space-2) var(--space-3); font-size:var(--text-xs); font-weight:500; border:1px solid var(--border); border-radius:var(--radius-md); color:var(--text-muted); background:var(--surface-3); white-space:nowrap; display:inline-flex; align-items:center; gap:var(--space-1); }
   .mini-btn:hover { color:var(--text); border-color:var(--accent); }
+  .mini-btn:disabled { opacity:0.4; cursor:not-allowed; }
   .mini-btn.danger:hover { color:var(--danger); border-color:var(--danger); }
-  .mini-btn.primary { background:var(--accent); color:var(--on-accent); border-color:var(--accent); font-weight:700; }
-  .mini-btn.primary:hover { background:var(--accent-hover); border-color:var(--accent-hover); color:var(--on-accent); }
 
   .filter-chips { display:flex; gap:var(--space-2); padding:var(--space-2) var(--space-3); flex-wrap:wrap; border-bottom:1px solid var(--border-soft); }
-  .chip { padding:var(--space-1) var(--space-3); font-size:var(--text-xs); border:1px solid var(--border); border-radius:var(--radius-full); color:var(--text-muted); background:var(--surface-3); display:inline-flex; align-items:center; gap:var(--space-1); }
+  .chip { padding:var(--space-1) var(--space-3); font-size:var(--text-xs); border:1px solid var(--border); border-radius:9999px; color:var(--text-muted); background:var(--surface-3); }
   .chip:hover { border-color:var(--accent); color:var(--text); }
   .chip.active { color:var(--text); border-color:var(--accent); background:var(--accent-soft); }
-  .chip .dot { width:8px; height:8px; border-radius:50%; }
 
   .list-wrap { flex:1; min-height:0; overflow:hidden; position:relative; }
   .vscroll { height:100%; overflow-y:auto; overflow-anchor:none; }
   .vspacer { position:relative; width:100%; }
   .row { position:absolute; left:0; right:0; display:flex; align-items:center; gap:var(--space-3); padding:var(--space-2) var(--space-4); border-bottom:1px solid var(--border-soft); }
   .row:nth-child(even) { background:var(--row-stripe); }
-  .row .idx { font-family:var(--font-mono); font-size:11px; color:var(--text-faint); min-width:2.5em; text-align:right; flex:none; }
-  .type-badge { font-size:10px; font-weight:600; padding:2px 7px; border-radius:var(--radius-full); flex:none; white-space:nowrap; letter-spacing:0.02em; }
-  .t-ship { background:color-mix(in oklab, var(--chip-ship) 18%, transparent); color:var(--chip-ship); }
-  .t-hand { background:color-mix(in oklab, var(--chip-hand) 18%, transparent); color:var(--chip-hand); }
-  .t-ground { background:color-mix(in oklab, var(--chip-ground) 18%, transparent); color:var(--chip-ground); }
-  .t-harvest { background:color-mix(in oklab, var(--chip-harvest) 18%, transparent); color:var(--chip-harvest); }
-  .t-creature { background:color-mix(in oklab, var(--chip-creature) 18%, transparent); color:var(--chip-creature); }
-  .t-rare { background:color-mix(in oklab, var(--chip-rare) 18%, transparent); color:var(--chip-rare); }
-  .t-pyro { background:color-mix(in oklab, var(--chip-pyro) 18%, transparent); color:var(--chip-pyro); }
-  .swatch { position:relative; width:36px; height:36px; flex:none; border-radius:var(--radius-sm); border:1px solid var(--border); cursor:pointer; overflow:hidden; background:linear-gradient(45deg, var(--surface-3) 25%, transparent 25%) 0 0/10px 10px, linear-gradient(-45deg, var(--surface-3) 25%, transparent 25%) 0 5px/10px 10px; }
+  .row .idx { font-family:var(--font-mono); font-size:11px; color:var(--text-faint); min-width:3.5em; text-align:right; flex:none; }
+  .swatch { position:relative; width:34px; height:34px; flex:none; border-radius:var(--radius-sm); border:1px solid var(--border); cursor:pointer; overflow:hidden; background:linear-gradient(45deg, var(--surface-3) 25%, transparent 25%) 0 0/10px 10px, linear-gradient(-45deg, var(--surface-3) 25%, transparent 25%) 0 5px/10px 10px; }
   .swatch input[type=color] { position:absolute; inset:-2px; width:calc(100% + 4px); height:calc(100% + 4px); border:none; padding:0; cursor:pointer; opacity:0; }
   .swatch .fill { position:absolute; inset:0; }
   .row .key { font-family:var(--font-mono); font-size:12.5px; font-weight:600; color:var(--text); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .row .loc { font-size:10.5px; color:var(--text-faint); flex:1.4; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .row .val { font-family:var(--font-mono); font-size:11px; color:var(--text-faint); flex:1.3; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .hex { width:78px; flex:none; font-family:var(--font-mono); font-size:11px; padding:var(--space-1) var(--space-2); background:var(--surface-3); border:1px solid var(--border); border-radius:var(--radius-sm); text-align:center; text-transform:uppercase; }
   .hex:focus { border-color:var(--accent); }
   .clear-x { width:22px; height:22px; flex:none; display:grid; place-items:center; color:var(--text-faint); border-radius:var(--radius-sm); }
   .clear-x:hover { color:var(--danger); background:var(--surface-3); }
   .empty-state { padding:var(--space-12); text-align:center; color:var(--text-muted); }
   .empty-state svg { color:var(--text-faint); margin:0 auto var(--space-4); }
+  .empty-state .big { font-size:var(--text-base); color:var(--text); font-weight:500; margin-bottom:var(--space-1); }
 
   /* Right */
   .out-actions { display:flex; gap:var(--space-2); margin-left:auto; }
@@ -172,16 +157,21 @@
       <path d="M16 3 5 9v14l11 6 11-6V9L16 3Z"/><path d="M16 3v14M5 9l11 8 11-8" opacity="0.6"/>
     </svg>
     <div>
-      <h1>Ore Color INI Editor</h1>
-      <div class="sub">Star Citizen mining resources · pick a color per ore · export ini</div>
+      <h1>INI Color Editor</h1>
+      <div class="sub">parse real keys · pick a color per key · write back</div>
     </div>
   </div>
   <div class="stats" id="stats">
-    <span><b id="stOres">0</b> ores</span>
+    <span><b id="stKeys">0</b> keys</span>
     <span><b id="stColored">0</b> colored</span>
     <span><b id="stShown">0</b> shown</span>
   </div>
   <input type="file" id="fileInput" accept=".ini,.txt,.cfg,.conf,text/plain" hidden />
+  <button class="file-btn ghost" id="sampleBtn">Load sample</button>
+  <button class="file-btn" id="openBtn">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+    Open INI
+  </button>
   <button class="icon-btn" id="themeBtn" aria-label="Toggle theme"></button>
 </header>
 
@@ -192,12 +182,12 @@
     <div class="pane-head"><h2>Source file</h2><span class="count" id="srcCount">no file</span></div>
     <div class="pane-body">
       <div class="left-actions">
-        <button class="mini-btn primary" id="openBtn">Open INI</button>
-        <button class="mini-btn" id="importBtn" title="Read OreName=#hex lines from the loaded file">Import colors</button>
+        <button class="mini-btn" id="knownBtn" title="Load the full known-key list (89k real Star Citizen keys merged from 4 community language packs)">Load known keys</button>
+        <button class="mini-btn" id="importBtn" title="Read OreName=#hex lines already in the file">Import colors</button>
       </div>
       <div class="dropzone" id="dropzone">
         <p class="big">Drop an .ini here</p>
-        <p>Optional — view your <code style="font-family:var(--font-mono);color:var(--accent)">global.ini</code> and pull in existing ore colors.</p>
+        <p>Every <code style="font-family:var(--font-mono);color:var(--accent)">key=value</code> line is parsed into a real key you can color.</p>
       </div>
       <div class="file-meta" id="fileMeta" hidden></div>
       <div class="raw-view" id="rawView" hidden></div>
@@ -206,25 +196,29 @@
 
   <!-- CENTER -->
   <section class="pane">
-    <div class="pane-head"><h2>Ore types</h2><span class="count" id="centerCount">—</span></div>
+    <div class="pane-head"><h2>Keys</h2><span class="count" id="centerCount">—</span></div>
     <div class="pane-body">
       <div class="toolbar">
         <label class="search">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-          <input type="search" id="search" placeholder="Filter ores, types, locations…" />
+          <input type="search" id="search" placeholder="Filter keys or values…" disabled />
         </label>
-        <button class="mini-btn" id="defaultBtn" title="Reset to type-based default colors">Defaults</button>
-        <button class="mini-btn" id="autoBtn" title="Assign a distinct hue to every ore">Auto-color</button>
-        <button class="mini-btn" id="randBtn" title="Randomize visible">Randomize</button>
-        <button class="mini-btn danger" id="clearBtn" title="Clear colors on visible">Clear</button>
+        <button class="mini-btn" id="autoBtn" disabled title="Distinct hue per visible key">Auto-color</button>
+        <button class="mini-btn" id="randBtn" disabled title="Randomize visible">Randomize</button>
+        <button class="mini-btn danger" id="clearBtn" disabled title="Clear visible">Clear</button>
       </div>
-      <div class="filter-chips" id="filterChips"></div>
+      <div class="filter-chips">
+        <button class="chip active" data-filter="all">All</button>
+        <button class="chip" data-filter="colored">Colored</button>
+        <button class="chip" data-filter="uncolored">Uncolored</button>
+      </div>
       <div class="list-wrap">
         <div class="vscroll" id="vscroll"><div class="vspacer" id="vspacer"></div></div>
       </div>
-      <div class="empty-state" id="emptyState" hidden>
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 7h-9M14 17H5M17 7a3 3 0 1 0-6 0M7 17a3 3 0 1 0-6 0"/></svg>
-        <p>No ores match.</p>
+      <div class="empty-state" id="emptyState">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+        <p class="big">No file loaded</p>
+        <p>Open or drop an .ini to parse its keys.</p>
       </div>
     </div>
   </section>
@@ -242,14 +236,14 @@
     </div>
     <div class="out-format">
       <div class="seg" id="fmtSeg">
-        <button class="active" data-fmt="block">Color block</button>
-        <button data-fmt="section">[OreColors]</button>
-        <button data-fmt="append">Append to source</button>
+        <button class="active" data-fmt="modify">Modify values</button>
+        <button data-fmt="map">Color map only</button>
+        <button data-fmt="section">[Colors]</button>
       </div>
       <span id="fmtHint"></span>
       <span class="out-stale" id="staleTag" hidden>● stale</span>
     </div>
-    <textarea class="output" id="output" spellcheck="false" placeholder="Assign colors to ores — the generated INI appears here."></textarea>
+    <textarea class="output" id="output" spellcheck="false" placeholder="Load an ini and assign colors — the modified ini (real keys only) appears here."></textarea>
   </section>
 
 </main>
@@ -258,107 +252,17 @@
 <script>
 (() => {
   'use strict';
-  const ROW_H = 52;
+  const ROW_H = 50;
   const $ = id => document.getElementById(id);
 
-  // ---------- Ore data (from beltakoda.github.io/ScCompLangPackRemix) ----------
-  const ORES = [
-    {n:"Agricium",t:"Ship Mineable",l:"Found in All Deposits"},
-    {n:"Aluminium",t:"Ship Mineable",l:"Aaron Halo, Cellin, Yela, Stanton Lagrange Points, Pyro Asteroid Clusters"},
-    {n:"Aluminum",t:"Ship Mineable",l:"Hurston, Arial, Aberdeen, Magda"},
-    {n:"Alumium",t:"Ship Mineable",l:"Ita (CIG typo)"},
-    {n:"Amiant Pod",t:"Harvestable",l:"Bloom (Pyro III)"},
-    {n:"Amioshi Plague",t:"Harvestable",l:"All Moons/Planets (Caves)"},
-    {n:"Aphorite",t:"Hand Mineable",l:"All Moons/Planets/Caves"},
-    {n:"Armillaria",t:"Harvestable",l:"All Moons/Planets (Caves)"},
-    {n:"Aslarite",t:"Ship Mineable",l:"Aaron Halo, Magda, Ita, Pyro Asteroid Clusters, Fuego, Vuur"},
-    {n:"Beradon",t:"Ground Vehicle Mineable",l:"Pyro I, Bloom (Pyro III)"},
-    {n:"Beryl",t:"Ship Mineable",l:"Found in All Deposits"},
-    {n:"Bexalite",t:"Ship Mineable (Rare)",l:"Found in All Deposits (Rare)"},
-    {n:"Borase",t:"Ship Mineable",l:"Found in All Deposits"},
-    {n:"Caranite",t:"Hand Mineable",l:"Aberdeen, Daymar"},
-    {n:"Pure Caranite",t:"Hand Mineable",l:"Aberdeen, Daymar"},
-    {n:"CompBoard",t:"Harvestable",l:"Hurston"},
-    {n:"Copper",t:"Ship Mineable",l:"Aaron Halo, Aberdeen, Daymar, Stanton Lagrange Points, Pyro Asteroid Clusters, Lyria, Clio, Euterpe, Pyro I, Pyro IV, Terminus"},
-    {n:"Corundum",t:"Ship Mineable",l:"Aaron Halo, Calliope, Clio, Euterpe, Lyria, microTech, Pyro Asteroid Clusters, Arial"},
-    {n:"Decari Pod",t:"Harvestable",l:"Pyro I"},
-    {n:"Degnous Root",t:"Harvestable",l:"Hurston"},
-    {n:"Dolivine",t:"Hand Mineable",l:"All Moons/Planets/Caves"},
-    {n:"Feynmaline",t:"Ground Vehicle Mineable",l:"Pyro IV"},
-    {n:"Flareweed Stalk",t:"Harvestable",l:"Bloom (Pyro III)"},
-    {n:"Fotia Seedpod",t:"Harvestable",l:"Pyro I"},
-    {n:"Glacosite",t:"Ground Vehicle Mineable",l:"Monox (Pyro II)"},
-    {n:"Gold",t:"Ship Mineable (Rare)",l:"Found in All Deposits (Rare)"},
-    {n:"Golden Medmon",t:"Harvestable",l:"Hurston, microTech"},
-    {n:"Hadanite",t:"Hand Mineable",l:"All Moons/Planets/Caves"},
-    {n:"Heart of the Woods",t:"Harvestable",l:"microTech"},
-    {n:"Hephaestanite",t:"Ship Mineable",l:"Found in All Deposits"},
-    {n:"Ice",t:"Ship Mineable",l:"Outer Pyro Asteroids, microTech, Calliope, Clio, Euterpe, Terminus"},
-    {n:"Iron",t:"Ship Mineable",l:"Aaron Halo, Aberdeen, Arial, Daymar, Ita, Magda, Stanton Lagrange Points, Pyro Asteroid Clusters, Lyria, Wala, microTech, Calliope, Pyro I, Monox, Vatra, Adir, Terminus"},
-    {n:"Janalite",t:"Hand Mineable",l:"Daymar, Hurston, Ita, Magda Sand Caves, Wala, Lyria, microTech, Calliope, Clio, Euterpe, Bloom, Fuego, Terminus"},
-    {n:"Janalite (Caves only)",t:"Hand Mineable",l:"Hurston, Arial, Aberdeen, Magda, Ita, Cellin, Daymar, Pyro I, Monox, Pyro IV, Ignis, Vatra, Adir, Fairo, Vuur"},
-    {n:"Juvenile Valakkar",t:"Creature",l:"Hurston, Daymar"},
-    {n:"Kopion",t:"Creature",l:"Hurston, microTech"},
-    {n:"Laranite",t:"Ship Mineable",l:"Found in All Deposits"},
-    {n:"Lindinium",t:"Ship Mineable",l:"Glaciem Ring"},
-    {n:"Marok",t:"Creature",l:"Hurston, microTech"},
-    {n:"Ouratite",t:"Ship Mineable",l:"Hurston, Arial, Aberdeen, Cellin, Yela's Ring"},
-    {n:"Pingala Seeds",t:"Harvestable",l:"Monox (Pyro II)"},
-    {n:"Pitambu",t:"Harvestable",l:"Hurston, microTech"},
-    {n:"Prota",t:"Harvestable",l:"Hurston"},
-    {n:"Quantainium",t:"Ship Mineable (Rare)",l:"Found in All Deposits (Rare)"},
-    {n:"Quartz",t:"Ship Mineable",l:"Aaron Halo, Aberdeen, Ariel, Calliope, Clio, Euterpe, Lyria, microTech, CRU-L5, ARC-L3, MIC-L4, Pyro Asteroid Clusters, Cellin, Daymar, Yela, Bloom"},
-    {n:"Quasigrazer",t:"Creature",l:"Hurston, microTech, Monox (Pyro II), Bloom (Pyro III), Pyro IV"},
-    {n:"Ranta Dung",t:"Harvestable",l:"All Moons/Planets (Caves)"},
-    {n:"Revenant Pod",t:"Harvestable",l:"Hurston"},
-    {n:"Riccite",t:"Ship Mineable (Rare, Pyro Only)",l:"Found in All Pyro Deposits (Rare)"},
-    {n:"Sadaryx",t:"Ship Mineable",l:"QV Breaker Stations (Nyx)"},
-    {n:"Savrilium",t:"Ship Mineable",l:"Glaciem Ring, QV Breaker Stations (Nyx)"},
-    {n:"Silicon",t:"Ship Mineable",l:"Inner Pyro Asteroids, Daymar, Yela, Ignis, Vatra, Fairo"},
-    {n:"Stileron",t:"Ship Mineable (Rare, Pyro Only)",l:"Found in All Pyro Deposits (Rare)"},
-    {n:"Stone Bug Shell",t:"Harvestable",l:"Daymar (Caves)"},
-    {n:"Sunset Berry",t:"Harvestable",l:"microTech"},
-    {n:"Taranite",t:"Ship Mineable (Rare)",l:"Found in All Deposits (Rare)"},
-    {n:"Tarantite",t:"Ship Mineable",l:"Cellin, Yela"},
-    {n:"Tin",t:"Ship Mineable",l:"Pyro III, Pyro IV, Hurston, Arial, Ita, Pyro I, Monox, Ignis"},
-    {n:"Titanium",t:"Ship Mineable",l:"Aaron Halo, Cellin, Daymar, Yela, Stanton Lagrange Points, Pyro Asteroid Clusters, Aberdeen, Magda, Terminus"},
-    {n:"Torite",t:"Ship Mineable",l:"Glaciem Ring, QV Breaker Stations (Nyx)"},
-    {n:"Tungsten",t:"Ship Mineable",l:"Aaron Halo, Lyria, Wala, CRU-L1, CRU-L2, CRU-L5, ARC-L3, MIC-L4, HUR-L3, Adir, Fairo"},
-    {n:"Wuotan Seeds",t:"Harvestable",l:"Pyro I"}
-  ];
-
-  // type classification -> badge class + default color
-  function typeClass(t){
-    if (t.includes("Pyro Only")) return {cls:"t-pyro", def:"#e8552a"};
-    if (t.includes("Rare")) return {cls:"t-rare", def:"#e8c14a"};
-    if (t.includes("Ship")) return {cls:"t-ship", def:"#5aa9e0"};
-    if (t.includes("Hand")) return {cls:"t-hand", def:"#e09a3f"};
-    if (t.includes("Ground")) return {cls:"t-ground", def:"#a9b84a"};
-    if (t.includes("Harvestable")) return {cls:"t-harvest", def:"#5fcd6e"};
-    if (t.includes("Creature")) return {cls:"t-creature", def:"#e0646a"};
-    return {cls:"", def:"#9a9a9a"};
-  }
-  const TYPE_CATS = [
-    {label:"All", match:null, dot:null},
-    {label:"Ship Mineable", match:"Ship Mineable", dot:"var(--chip-ship)"},
-    {label:"Hand Mineable", match:"Hand Mineable", dot:"var(--chip-hand)"},
-    {label:"Ground Vehicle", match:"Ground Vehicle Mineable", dot:"var(--chip-ground)"},
-    {label:"Harvestable", match:"Harvestable", dot:"var(--chip-harvest)"},
-    {label:"Creature", match:"Creature", dot:"var(--chip-creature)"}
-  ];
-
   // ---------- State ----------
-  let colors = new Map();      // ore name -> #RRGGBB
-  let defaults = new Map();     // ore name -> default #RRGGBB
-  let filtered = ORES.map((o,i)=>i);  // indices into ORES
-  let filterMatch = null;
-  let outFormat = 'block';
-  let dirty = false, renderPending = false;
-  let srcLines = [];
+  let entries = [];        // {i, key, value, raw, hasEq}  (value = original)
+  let filtered = [];      // indices into entries
+  let colors = new Map(); // key -> #RRGGBB  (only explicitly colored keys)
+  let filterMode = 'all';
+  let outFormat = 'modify';
+  let dirty = false, renderPending = false, idleGen;
   let srcName = '';
-
-  // seed defaults — white until the input ini supplies real colors
-  ORES.forEach(o => { defaults.set(o.n, '#FFFFFF'); colors.set(o.n, '#FFFFFF'); });
 
   // ---------- Theme ----------
   (function(){
@@ -369,37 +273,99 @@
       ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>'
       : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v2M12 20.5v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1.5 12h2M20.5 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>';
     paint();
-    b.addEventListener('click', ()=>{ t = t==='dark'?'light':'dark'; document.documentElement.setAttribute('data-theme',t); paint(); });
+    b.addEventListener('click', ()=>{ t = t==='dark'?'light':'dark'; document.documentElement.setAttribute('data-theme',t); paint(); if(entries.length) paintRows(); });
   })();
 
-  // ---------- Filter chips ----------
-  const chipsEl = $('filterChips');
-  TYPE_CATS.forEach(cat => {
-    const b = document.createElement('button');
-    b.className = 'chip' + (cat.match===null ? ' active':'');
-    b.innerHTML = (cat.dot? `<span class="dot" style="background:${cat.dot}"></span>`:'') + cat.label;
-    b.addEventListener('click', ()=>{
-      filterMatch = cat.match;
-      chipsEl.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));
-      b.classList.add('active');
-      applyFilter();
-    });
-    chipsEl.appendChild(b);
-  });
+  // ---------- Parsing ----------
+  function parse(text){
+    text = text.replace(/^\uFEFF/, '');
+    const lines = text.split(/\r\n|\r|\n/);
+    entries = [];
+    for (let i=0;i<lines.length;i++){
+      const raw = lines[i];
+      const eq = raw.indexOf('=');
+      if (eq === -1){ entries.push({i, key:null, value:null, raw, hasEq:false}); }
+      else { entries.push({i, key:raw.slice(0,eq), value:raw.slice(eq+1), raw, hasEq:true}); }
+    }
+  }
+
+  // ---------- File loading ----------
+  function loadText(text, name){
+    parse(text);
+    srcName = name.replace(/\.[^.]+$/, '') || 'source';
+    // auto-import: any existing Key=#hex lines become the assigned colors
+    const imp = importColorsFromEntries();
+    $('dropzone').hidden = true;
+    $('emptyState').hidden = entries.length>0;
+    $('fileMeta').hidden = false;
+    $('rawView').hidden = false;
+    $('fileMeta').innerHTML = `<span><b>${esc(name)}</b></span><span>${entries.length.toLocaleString()} lines</span><span>${entries.filter(e=>e.hasEq).length.toLocaleString()} keys</span><span>${(text.length/1024).toFixed(0)} KB</span>` + (imp? `<span style="color:var(--accent)">${imp} colors imported</span>`:'');
+    $('srcCount').textContent = name;
+    $('search').disabled = false;
+    ['autoBtn','randBtn','clearBtn'].forEach(id=>$(id).disabled=false);
+    renderRawView();
+    applyFilter();
+    scheduleGenerate();
+    updateStats();
+    if (imp) toast(`Parsed ${entries.filter(e=>e.hasEq).length.toLocaleString()} keys — ${imp} colors imported`);
+  }
+
+  function importColorsFromEntries(){
+    let n=0;
+    for (const e of entries){
+      if (!e.hasEq) continue;
+      const m = e.value.match(/^(#([0-9a-fA-F]{6}|[0-9a-fA-F]{3}))$/);
+      if (m){ colors.set(e.key, normalizeHex(m[1])); n++; }
+    }
+    return n;
+  }
+
+  // ---------- Raw view (virtualized for large files) ----------
+  function renderRawView(){
+    const view = $('rawView'); view.innerHTML='';
+    const MAX = 6000;
+    const paint = (start,end) => {
+      let html='';
+      for (let i=start;i<end;i++){
+        const e = entries[i]; if(!e) break;
+        if (!e.hasEq){ html += `<div class="raw-line"><span class="ln">${i+1}</span><span class="lc">${esc(trunc(e.raw,120))}</span></div>`; continue; }
+        const c = colors.get(e.key);
+        const dot = c ? `<span class="colordot" style="background:${c}"></span>` : '';
+        html += `<div class="raw-line"><span class="ln">${i+1}</span><span class="lhs">${dot}${esc(trunc(e.key,50))}</span><span class="eq">=</span><span class="rhs">${esc(trunc(e.value,90))}</span></div>`;
+      }
+      return html;
+    };
+    if (entries.length <= MAX){
+      view.innerHTML = paint(0, entries.length);
+    } else {
+      const RAW_H = 18;
+      const spacer = document.createElement('div'); spacer.style.position='relative'; spacer.style.width='100%';
+      view.appendChild(spacer);
+      const doPaint = ()=>{
+        const H=view.clientHeight, top=view.scrollTop;
+        const s=Math.max(0,Math.floor(top/RAW_H)-8), e=Math.min(entries.length,Math.ceil((top+H)/RAW_H)+8);
+        spacer.style.height=(entries.length*RAW_H)+'px';
+        spacer.innerHTML=paint(s,e);
+      };
+      view._paint=doPaint; doPaint(); view.onscroll=()=>requestAnimationFrame(doPaint);
+    }
+  }
 
   // ---------- Filtering ----------
   function applyFilter(){
     const q = $('search').value.trim().toLowerCase();
     filtered = [];
-    for (let i=0;i<ORES.length;i++){
-      const o = ORES[i];
-      if (filterMatch && !o.t.includes(filterMatch)) continue;
-      if (q){ if (o.n.toLowerCase().indexOf(q)===-1 && o.t.toLowerCase().indexOf(q)===-1 && o.l.toLowerCase().indexOf(q)===-1) continue; }
+    for (let i=0;i<entries.length;i++){
+      const e = entries[i];
+      if (!e.hasEq) continue;
+      const colored = colors.has(e.key);
+      if (filterMode==='colored' && !colored) continue;
+      if (filterMode==='uncolored' && colored) continue;
+      if (q){ if (e.key.toLowerCase().indexOf(q)===-1 && (e.value||'').toLowerCase().indexOf(q)===-1) continue; }
       filtered.push(i);
     }
-    $('centerCount').textContent = `${filtered.length} / ${ORES.length}`;
-    $('stShown').textContent = filtered.length;
-    $('emptyState').hidden = filtered.length>0;
+    $('centerCount').textContent = entries.length ? `${filtered.length.toLocaleString()} / ${entries.filter(e=>e.hasEq).length.toLocaleString()}` : '—';
+    $('emptyState').hidden = filtered.length>0 || entries.length===0;
     $('vscroll').scrollTop = 0;
     layoutList();
   }
@@ -414,28 +380,25 @@
   function paintRows(){
     const scroll = $('vscroll');
     const spacer = $('vspacer');
-    const H = scroll.clientHeight;
+    const H = scroll.clientHeight || 600;
     const top = scroll.scrollTop;
-    const start = Math.max(0, Math.floor(top/ROW_H)-2);
-    const end = Math.min(filtered.length, Math.ceil((top+H)/ROW_H)+2);
+    const start = Math.max(0, Math.floor(top/ROW_H)-3);
+    const end = Math.min(filtered.length, start + Math.ceil(H/ROW_H)+6);
     let html='';
     for (let i=start;i<end;i++){
-      const idx = filtered[i];
-      const o = ORES[idx];
-      const c = colors.get(o.n) || '';
-      const tc = typeClass(o.t);
+      const e = entries[filtered[i]];
+      const c = colors.get(e.key) || '';
       const empty = !c;
-      html += `<div class="row" style="top:${i*ROW_H}px" data-i="${idx}" data-name="${attr(o.n)}">
+      html += `<div class="row" style="top:${i*ROW_H}px" data-i="${filtered[i]}" data-key="${attr(e.key)}">
         <span class="idx">${i+1}</span>
-        <span class="type-badge ${tc.cls}">${esc(shortType(o.t))}</span>
         <label class="swatch ${empty?'empty':''}">
           <span class="fill" style="background:${c}"></span>
-          <input type="color" value="${c||'#2bb3b3'}" aria-label="color for ${attr(o.n)}">
+          <input type="color" value="${c||'#ffffff'}" aria-label="color for ${attr(e.key)}">
         </label>
-        <span class="key" title="${attr(o.n)} — ${attr(o.l)}">${esc(o.n)}</span>
-        <span class="loc" title="${attr(o.l)}">${esc(trunc(o.l,42))}</span>
+        <span class="key" title="${attr(e.key)}">${esc(trunc(e.key,44))}</span>
+        <span class="val" title="${attr(e.value||'')}">${esc(trunc(e.value||'',52))}</span>
         <input class="hex" value="${c||''}" placeholder="—" spellcheck="false">
-        <button class="clear-x" title="Reset to default" aria-label="reset"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/></svg></button>
+        <button class="clear-x" title="Clear color" ${empty?'hidden':''} aria-label="clear"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
       </div>`;
     }
     const range = document.createRange();
@@ -444,27 +407,17 @@
     const tmp = document.createElement('div'); tmp.innerHTML = html;
     while (tmp.firstChild) spacer.appendChild(tmp.firstChild);
   }
-  function shortType(t){
-    if (t.includes("Pyro Only")) return "Pyro";
-    if (t.includes("Rare")) return "Rare";
-    if (t.includes("Ship")) return "Ship";
-    if (t.includes("Hand")) return "Hand";
-    if (t.includes("Ground")) return "GV";
-    if (t.includes("Harvestable")) return "Harv";
-    if (t.includes("Creature")) return "Creature";
-    return t;
-  }
 
   // ---------- Color change ----------
-  function setColor(name, hex){
+  function setColor(key, hex){
     hex = normalizeHex(hex);
-    if (hex){ colors.set(name, hex); }
-    else { colors.set(name, defaults.get(name)||''); }
+    if (hex) colors.set(key, hex);
+    else colors.delete(key);
     markDirty();
   }
   function normalizeHex(v){
     if (!v) return null;
-    v = v.trim();
+    v = String(v).trim();
     if (v[0] !== '#') v = '#'+v;
     if (/^#[0-9a-fA-F]{3}$/.test(v)){ v = '#'+v[1]+v[1]+v[2]+v[2]+v[3]+v[3]; }
     if (!/^#[0-9a-fA-F]{6}$/.test(v)) return null;
@@ -473,53 +426,65 @@
 
   $('vscroll').addEventListener('input', ev=>{
     const row = ev.target.closest('.row'); if (!row) return;
-    const name = row.dataset.name;
+    const key = row.dataset.key;
     if (ev.target.type==='color'){
-      setColor(name, ev.target.value);
+      setColor(key, ev.target.value);
       const sw = row.querySelector('.swatch'); sw.classList.remove('empty');
       sw.querySelector('.fill').style.background = ev.target.value;
       row.querySelector('.hex').value = ev.target.value.toUpperCase();
+      row.querySelector('.clear-x').hidden = false;
     }
   });
   $('vscroll').addEventListener('change', ev=>{
     const row = ev.target.closest('.row'); if (!row) return;
-    const name = row.dataset.name;
+    const key = row.dataset.key;
     if (ev.target.classList.contains('hex')){
       const n = normalizeHex(ev.target.value);
-      if (n){ setColor(name, n); ev.target.value = n;
+      if (n){ setColor(key, n); ev.target.value = n;
         row.querySelector('.swatch').classList.remove('empty');
         row.querySelector('.swatch .fill').style.background = n;
         row.querySelector('input[type=color]').value = n;
-      } else { ev.target.value = colors.get(name)||''; }
+        row.querySelector('.clear-x').hidden = false;
+      } else { ev.target.value = colors.get(key)||''; }
     }
   });
   $('vscroll').addEventListener('click', ev=>{
     const x = ev.target.closest('.clear-x'); if (!x) return;
-    const row = x.closest('.row'); const name = row.dataset.name;
-    const d = defaults.get(name)||'';
-    colors.set(name, d);
-    row.querySelector('.swatch .fill').style.background = d;
-    row.querySelector('.hex').value = d;
-    row.querySelector('input[type=color]').value = d;
+    const row = x.closest('.row'); const key = row.dataset.key;
+    colors.delete(key);
+    row.querySelector('.swatch').classList.add('empty');
+    row.querySelector('.swatch .fill').style.background = '';
+    row.querySelector('.hex').value = '';
+    row.querySelector('.clear-x').hidden = true;
     markDirty();
   });
   $('vscroll').addEventListener('scroll', ()=>{ requestAnimationFrame(paintRows); }, {passive:true});
 
-  // ---------- Search ----------
+  // ---------- Search & chips ----------
   let searchTimer;
-  $('search').addEventListener('input', ()=>{ clearTimeout(searchTimer); searchTimer=setTimeout(applyFilter,120); });
+  $('search').addEventListener('input', ()=>{ clearTimeout(searchTimer); searchTimer=setTimeout(applyFilter,140); });
+  document.querySelectorAll('.chip').forEach(c=>{
+    c.addEventListener('click', ()=>{
+      document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));
+      c.classList.add('active'); filterMode = c.dataset.filter; applyFilter();
+    });
+  });
 
   // ---------- Bulk ----------
-  function eachVisible(fn){ filtered.forEach(i=>fn(ORES[i].n)); }
-  $('defaultBtn').addEventListener('click', ()=>{ eachVisible(n=>colors.set(n, defaults.get(n)||'')); paintRows(); markDirty(); toast('Reset to defaults'); });
+  function eachVisible(fn){ filtered.forEach(i=>fn(entries[i].key)); }
   $('autoBtn').addEventListener('click', ()=>{
     const n = filtered.length; let i=0;
-    eachVisible(nm=>{ colors.set(nm, hslToHex(Math.round((i/Math.max(n,1))*360), 58, 54)); i++; });
-    paintRows(); markDirty(); toast('Auto-colored by hue');
+    eachVisible(k=>{ colors.set(k, hslToHex(Math.round((i/Math.max(n,1))*360), 58, 54)); i++; });
+    paintRows(); markDirty();
   });
-  $('randBtn').addEventListener('click', ()=>{ eachVisible(nm=>colors.set(nm, hslToHex(Math.floor(Math.random()*360), 55+Math.random()*25, 45+Math.random()*18))); paintRows(); markDirty(); });
-  $('clearBtn').addEventListener('click', ()=>{ eachVisible(nm=>colors.set(nm, '')); paintRows(); markDirty(); toast('Colors cleared'); });
-
+  $('randBtn').addEventListener('click', ()=>{
+    eachVisible(k=>colors.set(k, hslToHex(Math.floor(Math.random()*360), 55+Math.random()*25, 45+Math.random()*18)));
+    paintRows(); markDirty();
+  });
+  $('clearBtn').addEventListener('click', ()=>{
+    eachVisible(k=>colors.delete(k));
+    paintRows(); markDirty();
+  });
   function hslToHex(h,s,l){
     s/=100; l/=100; const k=n=>(n+h/30)%12;
     const a=s*Math.min(l,1-l);
@@ -529,23 +494,24 @@
 
   // ---------- Output ----------
   function generate(){
-    const lines = [];
-    if (outFormat==='block'){
-      lines.push('# Star Citizen ore colors');
-      lines.push('# Source: beltakoda.github.io/ScCompLangPackRemix');
-      lines.push('');
-      ORES.forEach(o=>{ const c = colors.get(o.n); if (c) lines.push(`${o.n}=${c}`); });
-    } else if (outFormat==='section'){
-      lines.push('[OreColors]');
-      ORES.forEach(o=>{ const c = colors.get(o.n); if (c) lines.push(`${o.n}=${c}`); });
-    } else { // append
-      const base = srcLines.length ? srcLines : ['# (no source file loaded)'];
-      base.forEach(l=>lines.push(l));
-      lines.push('');
-      lines.push('# --- Ore colors ---');
-      ORES.forEach(o=>{ const c = colors.get(o.n); if (c) lines.push(`${o.n}=${c}`); });
+    const out = [];
+    if (outFormat==='modify'){
+      // full file, real keys only; colored keys get value=hex, others keep original
+      for (const e of entries){
+        if (!e.hasEq){ out.push(e.raw); continue; }
+        const c = colors.get(e.key);
+        out.push(c != null ? `${e.key}=${c}` : e.raw);
+      }
+      return out.join('\r\n');
     }
-    return lines.join('\n');
+    if (outFormat==='map'){
+      for (const e of entries){ if (e.hasEq && colors.has(e.key)) out.push(`${e.key}=${colors.get(e.key)}`); }
+      return out.join('\r\n');
+    }
+    // section
+    out.push('[Colors]');
+    for (const e of entries){ if (e.hasEq && colors.has(e.key)) out.push(`${e.key}=${colors.get(e.key)}`); }
+    return out.join('\r\n');
   }
   function scheduleGenerate(){
     dirty = true; $('staleTag').hidden = false;
@@ -560,20 +526,20 @@
     });
   });
   function updateFmtHint(){
-    $('fmtHint').innerHTML = outFormat==='block' ? '<code>Ore=#RRGGBB</code> for each colored ore + header.'
-      : outFormat==='section' ? '<code>[OreColors]</code> section, <code>Ore=#RRGGBB</code> per ore.'
-      : 'Source file lines + appended <code>Ore=#RRGGBB</code> block.';
+    $('fmtHint').innerHTML = outFormat==='modify' ? 'Full file, real keys only — colored keys set to <code>key=#hex</code>, rest unchanged.'
+      : outFormat==='map' ? 'Only colored keys as <code>key=#hex</code>.'
+      : '<code>[Colors]</code> section + colored keys.';
   }
-
   function updateStats(){
-    let colored=0; colors.forEach(c=>{ if(c) colored++; });
-    $('stOres').textContent = ORES.length;
+    let colored=0; colors.forEach(()=>colored++);
+    $('stKeys').textContent = entries.filter(e=>e.hasEq).length.toLocaleString();
     $('stColored').textContent = colored;
     $('stShown').textContent = filtered.length;
   }
 
   // ---------- Copy / download ----------
   $('copyBtn').addEventListener('click', async ()=>{
+    ensureOutput();
     const text = $('output').value;
     if (!text){ toast('Nothing to copy'); return; }
     try { await navigator.clipboard.writeText(text); }
@@ -583,18 +549,20 @@
     setTimeout(()=>{ b.classList.remove('done'); b.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>Copy'; },1600);
   });
   $('dlBtn').addEventListener('click', ()=>{
+    ensureOutput();
     const text=$('output').value; if (!text){ toast('Nothing to download'); return; }
-    const blob=new Blob([text],{type:'text/plain;charset=utf-8'});
+    const bom = new Uint8Array([0xEF,0xBB,0xBF]);
+    const blob=new Blob([bom, new TextEncoder().encode(text)],{type:'text/plain;charset=utf-8'});
     const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-    a.download = outFormat==='append' ? (srcName||'ore_colors') + (srcName?'.ini':'') : 'ore_colors.ini';
+    a.download = (outFormat==='modify' ? srcName : 'colors') + '.ini';
     a.click(); URL.revokeObjectURL(a.href);
   });
 
-  // ---------- Source file ----------
+  // ---------- File open ----------
   $('openBtn').addEventListener('click', ()=>$('fileInput').click());
   $('fileInput').addEventListener('change', e=>{
     const f=e.target.files[0]; if(!f) return;
-    const r=new FileReader(); r.onload=()=>loadSource(String(r.result), f.name); r.readAsText(f);
+    const r=new FileReader(); r.onload=()=>loadText(String(r.result), f.name); r.readAsText(f);
     e.target.value='';
   });
   const dz=$('dropzone');
@@ -602,89 +570,53 @@
   ['dragleave','drop'].forEach(ev=>window.addEventListener(ev,e=>{e.preventDefault(); dz.classList.remove('drag');}));
   window.addEventListener('drop', e=>{
     e.preventDefault(); const f=e.dataTransfer.files[0]; if(!f) return;
-    const r=new FileReader(); r.onload=()=>loadSource(String(r.result), f.name); r.readAsText(f);
+    const r=new FileReader(); r.onload=()=>loadText(String(r.result), f.name); r.readAsText(f);
   });
-  // Extract ore colors from ini lines. Supports formats:
-  //   OreName=#RRGGBB          OreName=#RGB
-  //   OreName=Color=#RRGGBB    OreName_Color=#RRGGBB
-  //   [OreColors] sections are tolerated (any line matching above counts)
-  function extractColors(lines){
-    const out = new Map();
-    const oreByName = new Map(ORES.map(o=>[o.n.toLowerCase(), o.n]));
-    const hexRe = /#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b/;
-    for (const raw of lines){
-      const eq = raw.indexOf('=');
-      if (eq === -1) continue;
-      let key = raw.slice(0, eq).trim();
-      const val = raw.slice(eq+1).trim();
-      const hm = val.match(hexRe);
-      if (!hm) continue;
-      const hex = normalizeHex(hm[1]);
-      if (!hex) continue;
-      // strip common suffixes like _Color / _Colour
-      key = key.replace(/_?colou?r$/i, '').trim();
-      const match = oreByName.get(key.toLowerCase());
-      if (match) out.set(match, hex);
-    }
-    return out;
-  }
-  function applyDefaultsFromIni(map){
-    // imported colors become the new defaults (reset target) and current colors
-    if (!map.size) return 0;
-    map.forEach((hex, name)=>{ defaults.set(name, hex); colors.set(name, hex); });
-    return map.size;
-  }
-  function loadSource(text, name){
-    srcName = name.replace(/\.[^.]+$/,'');
-    srcLines = text.replace(/^\uFEFF/,'').split(/\r\n|\r|\n/);
-    if (srcLines.length && srcLines[srcLines.length-1]==='') srcLines.pop();
-    // auto-import: defaults align with the input ini
-    const imported = applyDefaultsFromIni(extractColors(srcLines));
-    $('dropzone').hidden = true;
-    $('fileMeta').hidden = false;
-    $('rawView').hidden = false;
-    $('fileMeta').innerHTML = `<span><b>${esc(name)}</b></span><span>${srcLines.length.toLocaleString()} lines</span><span>${(text.length/1024).toFixed(0)} KB</span>` + (imported? `<span class="" style="color:var(--accent)">${imported} colors imported</span>` : '');
-    $('srcCount').textContent = name;
-    renderRawView();
-    paintRows();
-    scheduleGenerate();
-    if (imported) toast(`Defaults aligned to ${name} — ${imported} ore colors`);
-  }
-  function renderRawView(){
-    const view = $('rawView'); view.innerHTML='';
-    const MAX = 6000;
-    const paint = (start,end) => {
-      let html='';
-      for (let i=start;i<end;i++){
-        const raw = srcLines[i] ?? '';
-        const eq = raw.indexOf('=');
-        if (eq===-1){ html += `<div class="raw-line"><span class="ln">${i+1}</span><span class="lc">${esc(trunc(raw,90))}</span></div>`; continue; }
-        const lhs = raw.slice(0,eq), rhs = raw.slice(eq+1);
-        const dot = colors.get(lhs) ? `<span class="colordot" style="background:${colors.get(lhs)}"></span>` : '';
-        html += `<div class="raw-line"><span class="ln">${i+1}</span><span class="lhs">${dot}${esc(trunc(lhs,46))}</span><span class="eq">=</span><span class="rhs">${esc(trunc(rhs,80))}</span></div>`;
-      }
-      return html;
-    };
-    if (srcLines.length <= MAX){
-      view.innerHTML = paint(0, srcLines.length);
-    } else {
-      const RAW_H = 18;
-      const spacer = document.createElement('div'); spacer.style.position='relative'; spacer.style.width='100%';
-      view.appendChild(spacer);
-      const doPaint = ()=>{
-        const H=view.clientHeight, top=view.scrollTop;
-        const s=Math.max(0,Math.floor(top/RAW_H)-8), e=Math.min(srcLines.length,Math.ceil((top+H)/RAW_H)+8);
-        spacer.style.height=(srcLines.length*RAW_H)+'px';
-        spacer.innerHTML=paint(s,e);
-      };
-      view._paint=doPaint; doPaint(); view.onscroll=()=>requestAnimationFrame(doPaint);
-    }
-  }
   $('importBtn').addEventListener('click', ()=>{
-    if (!srcLines.length){ toast('Open an INI first'); return; }
-    const count = applyDefaultsFromIni(extractColors(srcLines));
-    paintRows(); markDirty();
-    toast(count ? `Aligned defaults — ${count} ore colors from ini` : 'No matching OreName=#hex lines found');
+    if (!entries.length){ toast('Open an INI first'); return; }
+    const n = importColorsFromEntries();
+    renderRawView(); paintRows(); markDirty();
+    toast(n ? `Imported ${n} colors` : 'No Key=#hex lines found');
+  });
+
+  // ---------- Known keys (merged from 4 community language packs) ----------
+  let knownLoading = false;
+  async function loadKnownKeys(){
+    if (knownLoading || entries.length) return;
+    knownLoading = true;
+    const btn = $('knownBtn'); btn.disabled = true; btn.textContent = 'Loading…';
+    $('emptyState').querySelector('.big').textContent = 'Loading 89k known keys…';
+    $('emptyState').querySelector('p+p, p:last-child').textContent = 'Fetching the merged language-pack union.';
+    $('emptyState').hidden = false;
+    try {
+      const res = await fetch('known-keys.ini');
+      if (!res.ok) throw new Error('HTTP '+res.status);
+      const text = await res.text();
+      loadText(text, 'known-keys.ini');
+      btn.textContent = 'Known keys loaded';
+    } catch(e){
+      knownLoading = false; btn.disabled = false; btn.textContent = 'Load known keys';
+      $('emptyState').querySelector('.big').textContent = 'Failed to load known keys';
+      toast('Could not load known-keys.ini');
+    }
+  }
+  $('knownBtn').addEventListener('click', loadKnownKeys);
+
+  // ---------- Sample ----------
+  $('sampleBtn').addEventListener('click', ()=>{
+    const sample = `# sample.ini
+items_commodities_Agricium=Agricium
+items_commodities_Bexalite=Bexalite
+items_commodities_Quantainium=Quantainium
+items_commodities_Taranite=Taranite
+items_commodities_Borase=Borase
+items_commodities_Laranite=Laranite
+items_commodities_Gold=Gold
+items_commodities_Copper=Copper
+items_commodities_Iron=Iron
+items_commodities_Tungsten=Tungsten
+item_NameQDRV_Smile_Drive_Quantum=Quantum Drive`;
+    loadText(sample, 'sample.ini');
   });
 
   // ---------- utils ----------
@@ -696,10 +628,11 @@
 
   // ---------- init ----------
   updateFmtHint();
-  applyFilter();
-  scheduleGenerate();
+  updateStats();
+  // auto-load the known key list (merged from the 4 community language packs)
+  loadKnownKeys();
   let rt;
-  window.addEventListener('resize', ()=>{ clearTimeout(rt); rt=setTimeout(()=>{ if(srcLines.length && $('rawView')._paint) $('rawView')._paint(); paintRows(); },120); });
+  window.addEventListener('resize', ()=>{ clearTimeout(rt); rt=setTimeout(()=>{ if(entries.length && $('rawView')._paint) $('rawView')._paint(); paintRows(); },120); });
 })();
 </script>
 </body>
