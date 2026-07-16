@@ -265,27 +265,27 @@
             <button class="pack-item" data-pack="stock">
               <span class="pack-name">Stock global.ini</span>
               <span class="pack-desc">Vanilla unmodified LIVE patch (88,992 keys)</span>
-              <span class="pack-updated"><b>Last updated:</b> May 20, 2026</span>
+              <span class="pack-updated" id="pu-stock"><b>Last updated:</b> May 20, 2026</span>
             </button>
             <button class="pack-item" data-pack="beltakoda">
               <span class="pack-name">BeltaKoda Remix</span>
               <span class="pack-desc">Ship component names with Type/Size/Grade prefixes</span>
-              <span class="pack-updated"><b>Last updated:</b> May 20, 2026</span>
+              <span class="pack-updated" id="pu-beltakoda"><b>Last updated:</b> May 20, 2026</span>
             </button>
             <button class="pack-item" data-pack="exoae">
               <span class="pack-name">ExoAE ScCompLangPack</span>
               <span class="pack-desc">Original component naming pack with size/grade info</span>
-              <span class="pack-updated"><b>Last updated:</b> Jul 1, 2026</span>
+              <span class="pack-updated" id="pu-exoae"><b>Last updated:</b> Jul 1, 2026</span>
             </button>
             <button class="pack-item" data-pack="exoae2">
               <span class="pack-name">ExoAE Remix2</span>
               <span class="pack-desc">ExoAE alternative remix variant</span>
-              <span class="pack-updated"><b>Last updated:</b> Jul 1, 2026</span>
+              <span class="pack-updated" id="pu-exoae2"><b>Last updated:</b> Jul 1, 2026</span>
             </button>
             <button class="pack-item" data-pack="mrkraken">
               <span class="pack-name">MrKraken StarStrings</span>
               <span class="pack-desc">Mission text, blueprint pools, commodity and UI fixes</span>
-              <span class="pack-updated"><b>Last updated:</b> Jul 1, 2026</span>
+              <span class="pack-updated" id="pu-mrkraken"><b>Last updated:</b> Jul 1, 2026</span>
             </button>
           </div>
         </div>
@@ -422,11 +422,41 @@
   const PACK_NAMES = {
     stock:'stock-global.ini', beltakoda:'BeltaKoda-Remix.ini', exoae:'ExoAE.ini', exoae2:'ExoAE-Remix2.ini', mrkraken:'MrKraken-StarStrings.ini'
   };
-  // Last upstream commit date for each pack's global.ini (via GitHub API, captured 2026-07-10)
-  const PACK_UPDATED = {
+  // Fallback last-updated dates (used until the live GitHub API values arrive).
+  // These are refreshed dynamically by fetchPackDates() on page load.
+  let packUpdated = {
     stock:'2026-05-20', beltakoda:'2026-05-20', exoae:'2026-07-01', exoae2:'2026-07-01', mrkraken:'2026-07-01'
   };
-  function fmtDate(iso){ if(!iso) return ''; const d=new Date(iso+'T00:00:00Z'); return d.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric',timeZone:'UTC'}); }
+  function fmtDate(iso){ if(!iso) return ''; const d=new Date(iso.length<=10 ? iso+'T00:00:00Z' : iso); return d.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric',timeZone:'UTC'}); }
+  // Derive a GitHub commits API URL from a raw.githubusercontent.com file URL
+  function githubCommitApiUrl(rawUrl){
+    try {
+      const u = new URL(rawUrl);
+      const p = u.pathname.split('/').filter(Boolean); // [owner, repo, branch, ...path]
+      if (p.length < 4) return null;
+      const owner=p[0], repo=p[1], branch=p[2], path=p.slice(3).join('/');
+      return `https://api.github.com/repos/${owner}/${repo}/commits?path=${encodeURIComponent(path)}&sha=${branch}&per_page=1`;
+    } catch(_) { return null; }
+  }
+  // Fetch each pack's real last-commit date from the GitHub API and update the UI live.
+  async function fetchPackDates(){
+    await Promise.all(Object.keys(PACK_URLS).map(async id => {
+      const api = githubCommitApiUrl(PACK_URLS[id]);
+      if (!api) return;
+      try {
+        const res = await fetch(api, { headers:{'Accept':'application/vnd.github+json'} });
+        if (!res.ok) return;
+        const data = await res.json();
+        const date = data && data[0] && data[0].commit && data[0].commit.committer && data[0].commit.committer.date;
+        if (date){ packUpdated[id] = date; updatePackDateUI(id, date); }
+      } catch(_) { /* keep fallback */ }
+    }));
+  }
+  function updatePackDateUI(id, iso){
+    const el = $('pu-'+id);
+    if (el) el.innerHTML = `<b>Last updated:</b> ${fmtDate(iso)}`;
+    if (srcPack === id){ const s=$('lc-updated'); if (s) s.textContent = fmtDate(iso); }
+  }
   function isEditableKey(key){
     // Scope narrowed to curated keys (mineable commodities + vehicle components from star-citizen.wiki API)
     return CURATED_KEYS.has(key);
@@ -600,8 +630,8 @@
     const lines = entries.length;
     const keys = entries.filter(e=>e.hasEq).length;
     const kb = (text.length/1024).toFixed(0);
-    const updated = srcPack ? fmtDate(PACK_UPDATED[srcPack]) : '';
-    const updatedStat = updated ? `<div class="stat"><span class="k">Last updated</span><span class="v">${updated}</span></div>` : '';
+    const updated = srcPack ? fmtDate(packUpdated[srcPack]) : '';
+    const updatedStat = updated ? `<div class="stat"><span class="k">Last updated</span><span class="v" id="lc-updated">${updated}</span></div>` : '';
     $('loadedCard').hidden = false;
     $('loadedCard').innerHTML = `
       <div class="lc-head">
@@ -1039,6 +1069,8 @@ item_NameQDRV_Smile_Drive_Quantum=Quantum Drive`;
   // auto-load the known key list (merged from the 5 community language packs)
   loadKnownKeys();
   loadKnownKeysMeta();
+  // fetch each pack's real last-updated date from the GitHub API (updates UI live)
+  fetchPackDates();
   let rt;
   window.addEventListener('resize', ()=>{ clearTimeout(rt); rt=setTimeout(paintRows,120); });
 })();
