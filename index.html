@@ -353,8 +353,8 @@
     </div>
     <div class="out-format">
       <div class="seg" id="fmtSeg">
-        <button class="active" data-fmt="full">Full output</button>
-        <button data-fmt="changes">Changes only</button>
+        <button data-fmt="full">Full output</button>
+        <button class="active" data-fmt="changes">Changes only</button>
       </div>
       <span id="fmtHint"></span>
       <span class="out-stale" id="staleTag" hidden>● stale</span>
@@ -389,7 +389,7 @@
   const EM_LABELS = { EM2:'EM2 — green', EM4:'EM4 — red' };
   const EM_OPTIONS = [{v:'',label:'— none —'}, ...EM_TAGS.map(t=>({v:t,label:EM_LABELS[t]}))];
   const EM_WRAP_RE = /^<(EM\d)>([\s\S]*)<\/EM\d>$/;   // detects a value fully wrapped in one EM tag
-  let outFormat = 'full';
+  let outFormat = 'changes';
   let dirty = false, renderPending = false, idleGen;
   let generatedText = '';   // true CRLF string (textarea .value normalizes to LF)
   function ensureOutput(){ if (dirty){ clearTimeout(idleGen); generatedText = generate(); $('output').value = generatedText; dirty=false; $('staleTag').hidden=true; updateStats(); } }
