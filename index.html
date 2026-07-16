@@ -373,6 +373,7 @@
 
   // ---------- State ----------
   let entries = [];        // {i, key, value, raw, hasEq}  (value = original)  — the LOADED FILE
+  let entryByKey = new Map(); // key -> entry (for change-diff lookups); rebuilt on load
   let centerList = [];     // {key, value, inFile} — editable keys shown in center (file + virtual known)
   let filtered = [];      // indices into centerList
   let sortMode = 'default'; // 'default' | 'asc' | 'desc'
@@ -608,6 +609,9 @@
     colors.clear(); customValues.clear();
     // auto-import: any existing <EMn>...</EMn> wrappers become the assigned tags
     const imp = importColorsFromEntries();
+    // index in-file keys for change-diff lookups (after import, so e.value is the stripped inner text)
+    entryByKey = new Map();
+    for (const e of entries){ if (e.hasEq) entryByKey.set(e.key, e); }
     buildCenterList();
     $('dropzone').hidden = true;
     $('emptyState').hidden = centerList.length>0 || entries.length>0;
@@ -661,29 +665,38 @@
   // The effective value for a key: custom-edited text if set, else the original.
   const effVal = (key, def) => customValues.has(key) ? customValues.get(key) : def;
   // True when a key has any modification (edited text and/or EM tag).
+  // True when a key has any tag or text edit (imported from file OR user-set).
   const isModified = (key) => colors.has(key) || customValues.has(key);
+  // True when the OUTPUT for a key differs from the LOADED source line — a real change.
+  // In-file keys: compare the generated line to the original raw line.
+  // Virtual keys (not in file): a change only if the user set a tag or text.
+  function isChanged(key){
+    const e = entryByKey.get(key);
+    if (!e) return colors.has(key) || customValues.has(key);
+    return wrapVal(key, effVal(key, e.value), colors.get(key)) !== e.raw;
+  }
   // Wrap a value in an EM emphasis tag when one is assigned.
   const wrapVal = (key, val, em) => em ? `${key}=<${em}>${val}</${em}>` : `${key}=${val}`;
   function generate(){
     const out = [];
     const fileKeys = new Set();
     if (outFormat==='full'){
-      // full file: modified keys get their (possibly edited) value wrapped in <EMn>..</EMn>, rest unchanged
+      // full file: keys changed from the source get their (possibly edited) value wrapped in <EMn>..</EMn>, rest unchanged
       for (const e of entries){
         if (!e.hasEq){ out.push(e.raw); continue; }
         fileKeys.add(e.key);
-        if (isModified(e.key)) out.push(wrapVal(e.key, effVal(e.key, e.value), colors.get(e.key)));
+        if (isChanged(e.key)) out.push(wrapVal(e.key, effVal(e.key, e.value), colors.get(e.key)));
         else out.push(e.raw);
       }
       // append modified keys not present in the file (virtual known keys)
-      for (const k of colors.keys()){ if (!fileKeys.has(k) && knownValues.has(k)) out.push(wrapVal(k, effVal(k, knownValues.get(k)), colors.get(k))); }
-      for (const k of customValues.keys()){ if (!fileKeys.has(k) && knownValues.has(k) && !colors.has(k)) out.push(wrapVal(k, customValues.get(k), '')); }
+      for (const k of colors.keys()){ if (!fileKeys.has(k) && knownValues.has(k) && isChanged(k)) out.push(wrapVal(k, effVal(k, knownValues.get(k)), colors.get(k))); }
+      for (const k of customValues.keys()){ if (!fileKeys.has(k) && knownValues.has(k) && !colors.has(k) && isChanged(k)) out.push(wrapVal(k, customValues.get(k), '')); }
       return out.join('\r\n');
     }
-    // changes only: just the modified keys (in-file + virtual), as key=value (wrapped if tagged)
-    for (const e of entries){ if (e.hasEq && isModified(e.key)){ fileKeys.add(e.key); out.push(wrapVal(e.key, effVal(e.key, e.value), colors.get(e.key))); } }
-    for (const k of colors.keys()){ if (!fileKeys.has(k) && knownValues.has(k)){ fileKeys.add(k); out.push(wrapVal(k, effVal(k, knownValues.get(k)), colors.get(k))); } }
-    for (const k of customValues.keys()){ if (!fileKeys.has(k) && knownValues.has(k) && !colors.has(k)) out.push(wrapVal(k, customValues.get(k), '')); }
+    // changes only: only keys whose output differs from the loaded source (in-file + virtual)
+    for (const e of entries){ if (e.hasEq && isChanged(e.key)){ fileKeys.add(e.key); out.push(wrapVal(e.key, effVal(e.key, e.value), colors.get(e.key))); } }
+    for (const k of colors.keys()){ if (!fileKeys.has(k) && knownValues.has(k) && isChanged(k)){ fileKeys.add(k); out.push(wrapVal(k, effVal(k, knownValues.get(k)), colors.get(k))); } }
+    for (const k of customValues.keys()){ if (!fileKeys.has(k) && knownValues.has(k) && !colors.has(k) && isChanged(k)) out.push(wrapVal(k, customValues.get(k), '')); }
     return out.join('\r\n');
   }
 
@@ -701,8 +714,8 @@
     const useGroup = selGroup !== null && catCounts;
     for (let i=0;i<centerList.length;i++){
       const e = centerList[i];
-      if (filterMode==='colored' && !isModified(e.key)) continue;
-      if (filterMode==='uncolored' && isModified(e.key)) continue;
+      if (filterMode==='colored' && !isChanged(e.key)) continue;
+      if (filterMode==='uncolored' && isChanged(e.key)) continue;
       if (useCat || useGroup){
         const c = categorizeKey(e.key);
         if (useCat && c !== selCat) continue;
@@ -873,11 +886,14 @@
     });
   });
   function updateFmtHint(){
-    $('fmtHint').innerHTML = outFormat==='full' ? 'Full file — modified keys use your edited text, wrapped in <code>&lt;EMn&gt;value&lt;/EMn&gt;</code> when tagged; modified keys not in your file are appended.'
-      : 'Only the keys you modified (tagged and/or text-edited), in-file + virtual.';
+    $('fmtHint').innerHTML = outFormat==='full' ? 'Full file — keys you changed use your edited text, wrapped in <code>&lt;EMn&gt;value&lt;/EMn&gt;</code> when tagged; changed keys not in your file are appended.'
+      : 'Only keys whose output differs from the loaded source — your tag/text edits, in-file + virtual.';
   }
   function updateStats(){
-    const modified = new Set([...colors.keys(), ...customValues.keys()]).size;
+    // count keys whose output differs from the loaded source (true changes)
+    const seen = new Set([...colors.keys(), ...customValues.keys()]);
+    for (const e of entries){ if (e.hasEq) seen.add(e.key); }
+    let modified = 0; for (const k of seen){ if (isChanged(k)) modified++; }
     $('stKeys').textContent = entries.filter(e=>e.hasEq).length.toLocaleString();
     $('stColored').textContent = modified;
     $('stShown').textContent = filtered.length;
