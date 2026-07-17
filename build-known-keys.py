@@ -30,7 +30,7 @@ PACKS = [
     ("beltakoda", "https://raw.githubusercontent.com/BeltaKoda/ScCompLangPackRemix/main/LIVE/data/Localization/english/global.ini"),
     ("exoae",     "https://raw.githubusercontent.com/ExoAE/ScCompLangPack/main/ScCompLangPack/data/Localization/english/global.ini"),
     ("exoae2",    "https://raw.githubusercontent.com/ExoAE/ScCompLangPack/main/ScCompLangPackRemix2/data/Localization/english/global.ini"),
-    ("mrkraken",  "https://raw.githubusercontent.com/MrKraken/StarStrings/master/Data/Localization/english/global.ini"),
+    ("mrkraken",  "https://raw.githubusercontent.com/MrKraken/StarStrings/master/src/For_Players/Data/Localization/english/global.ini"),
 ]
 
 INI_OUT  = "known-keys.ini"
