@@ -21,6 +21,7 @@ The output format matches what the app's buildKnownValues() expects:
 import json
 import sys
 import urllib.request
+import urllib.parse
 from datetime import datetime, timezone
 
 # Same packs / URLs the app uses (index.html PACK_URLS), in priority order.
@@ -41,6 +42,36 @@ def fetch(url):
     req = urllib.request.Request(url, headers={"User-Agent": "sc-ore-color-editor/build-known-keys"})
     with urllib.request.urlopen(req, timeout=60) as r:
         return r.read().decode("utf-8-sig", errors="replace")
+
+
+def commit_api_url(raw_url):
+    """Derive the GitHub commits API URL (latest commit for a file) from a
+    raw.githubusercontent.com file URL: .../{owner}/{repo}/{branch}/{path...}"""
+    p = urllib.parse.urlparse(raw_url)
+    parts = [s for s in p.path.split("/") if s]  # [owner, repo, branch, ...path]
+    if len(parts) < 4:
+        return None
+    owner, repo, branch = parts[0], parts[1], parts[2]
+    path = "/".join(parts[3:])
+    q = urllib.parse.urlencode({"path": path, "sha": branch, "per_page": "1"})
+    return f"https://api.github.com/repos/{owner}/{repo}/commits?{q}"
+
+
+def fetch_commit_date(raw_url):
+    """Return the ISO date of the latest commit touching raw_url's file, or None."""
+    api = commit_api_url(raw_url)
+    if not api:
+        return None
+    req = urllib.request.Request(api, headers={
+        "User-Agent": "sc-ore-color-editor/build-known-keys",
+        "Accept": "application/vnd.github+json",
+    })
+    with urllib.request.urlopen(req, timeout=60) as r:
+        data = json.loads(r.read().decode("utf-8", errors="replace"))
+    if isinstance(data, list) and data:
+        c = data[0].get("commit", {}).get("committer", {}).get("date")
+        return c
+    return None
 
 
 def parse_keys(text):
@@ -64,7 +95,7 @@ def main():
     check_only = "--check" in sys.argv
 
     merged = {}          # key -> value (first pack to define it wins)
-    per_pack = {}        # pack -> key count
+    per_pack = {}        # pack -> {keys: count, updated: ISO date}
     for pack_id, url in PACKS:
         try:
             text = fetch(url)
@@ -72,13 +103,19 @@ def main():
             print(f"  ✗ {pack_id}: fetch failed ({e})", file=sys.stderr)
             sys.exit(1)
         keys = parse_keys(text)
-        per_pack[pack_id] = len(keys)
+        # latest commit date for this pack's file (best-effort; non-fatal)
+        updated = None
+        try:
+            updated = fetch_commit_date(url)
+        except Exception as e:
+            print(f"  · {pack_id}: commit date unavailable ({e})", file=sys.stderr)
+        per_pack[pack_id] = {"keys": len(keys), "updated": updated}
         added = 0
         for k, v in keys.items():
             if k not in merged:
                 merged[k] = v
                 added += 1
-        print(f"  ✓ {pack_id}: {len(keys):,} keys ({added:,} new)")
+        print(f"  ✓ {pack_id}: {len(keys):,} keys ({added:,} new)" + (f"  updated {updated[:10]}" if updated else ""))
 
     # Stable, diff-friendly ordering: sort by key.
     sorted_keys = sorted(merged.items(), key=lambda kv: kv[0])

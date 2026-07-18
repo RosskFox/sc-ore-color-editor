@@ -275,17 +275,17 @@
             <button class="pack-item" data-pack="exoae">
               <span class="pack-name">ExoAE ScCompLangPack</span>
               <span class="pack-desc">Original component naming pack with size/grade info</span>
-              <span class="pack-updated" id="pu-exoae"><b>Last updated:</b> Jul 1, 2026</span>
+              <span class="pack-updated" id="pu-exoae"><b>Last updated:</b> Jul 16, 2026</span>
             </button>
             <button class="pack-item" data-pack="exoae2">
               <span class="pack-name">ExoAE Remix2</span>
               <span class="pack-desc">ExoAE alternative remix variant</span>
-              <span class="pack-updated" id="pu-exoae2"><b>Last updated:</b> Jul 1, 2026</span>
+              <span class="pack-updated" id="pu-exoae2"><b>Last updated:</b> Jul 16, 2026</span>
             </button>
             <button class="pack-item" data-pack="mrkraken">
               <span class="pack-name">MrKraken StarStrings</span>
               <span class="pack-desc">Mission text, blueprint pools, commodity and UI fixes</span>
-              <span class="pack-updated" id="pu-mrkraken"><b>Last updated:</b> Jul 1, 2026</span>
+              <span class="pack-updated" id="pu-mrkraken"><b>Last updated:</b> Jul 17, 2026</span>
             </button>
           </div>
         </div>
@@ -423,36 +423,14 @@
   const PACK_NAMES = {
     stock:'stock-global.ini', beltakoda:'BeltaKoda-Remix.ini', exoae:'ExoAE.ini', exoae2:'ExoAE-Remix2.ini', mrkraken:'MrKraken-StarStrings.ini'
   };
-  // Fallback last-updated dates (used until the live GitHub API values arrive).
-  // These are refreshed dynamically by fetchPackDates() on page load.
+  // Last-updated dates per pack. Populated from known-keys.meta.json (written by the
+  // daily refresh script, which fetches each pack's commit date server-side). This
+  // avoids hitting GitHub's unauthenticated API from every visitor's browser
+  // (60 req/hr limit caused stale fallback dates under repeated loads).
   let packUpdated = {
-    stock:'2026-05-20', beltakoda:'2026-05-20', exoae:'2026-07-01', exoae2:'2026-07-01', mrkraken:'2026-07-01'
+    stock:'2026-05-20', beltakoda:'2026-05-20', exoae:'2026-07-16', exoae2:'2026-07-16', mrkraken:'2026-07-17'
   };
   function fmtDate(iso){ if(!iso) return ''; const d=new Date(iso.length<=10 ? iso+'T00:00:00Z' : iso); return d.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric',timeZone:'UTC'}); }
-  // Derive a GitHub commits API URL from a raw.githubusercontent.com file URL
-  function githubCommitApiUrl(rawUrl){
-    try {
-      const u = new URL(rawUrl);
-      const p = u.pathname.split('/').filter(Boolean); // [owner, repo, branch, ...path]
-      if (p.length < 4) return null;
-      const owner=p[0], repo=p[1], branch=p[2], path=p.slice(3).join('/');
-      return `https://api.github.com/repos/${owner}/${repo}/commits?path=${encodeURIComponent(path)}&sha=${branch}&per_page=1`;
-    } catch(_) { return null; }
-  }
-  // Fetch each pack's real last-commit date from the GitHub API and update the UI live.
-  async function fetchPackDates(){
-    await Promise.all(Object.keys(PACK_URLS).map(async id => {
-      const api = githubCommitApiUrl(PACK_URLS[id]);
-      if (!api) return;
-      try {
-        const res = await fetch(api, { headers:{'Accept':'application/vnd.github+json'} });
-        if (!res.ok) return;
-        const data = await res.json();
-        const date = data && data[0] && data[0].commit && data[0].commit.committer && data[0].commit.committer.date;
-        if (date){ packUpdated[id] = date; updatePackDateUI(id, date); }
-      } catch(_) { /* keep fallback */ }
-    }));
-  }
   function updatePackDateUI(id, iso){
     const el = $('pu-'+id);
     if (el) el.innerHTML = `<b>Last updated:</b> ${fmtDate(iso)}`;
@@ -1065,7 +1043,15 @@ item_NameQDRV_Smile_Drive_Quantum=Quantum Drive`;
       const m = await res.json();
       const when = m.refreshed ? fmtMetaDate(m.refreshed) : 'unknown';
       $('kkRefreshText').textContent = 'known-keys refreshed '+when;
-      const packs = m.packs ? Object.entries(m.packs).map(([k,v])=>k+': '+v.toLocaleString()).join('  ·  ') : '';
+      // Per-pack last-updated dates come from the meta file (server-fetched by the
+      // daily refresh script), avoiding client-side GitHub API rate limits.
+      if (m.packs){
+        for (const [id, info] of Object.entries(m.packs)){
+          const date = (info && (info.updated || info.date)) || (typeof info === 'string' ? info : null);
+          if (date){ packUpdated[id] = date; updatePackDateUI(id, date); }
+        }
+      }
+      const packs = m.packs ? Object.entries(m.packs).map(([k,v])=>k+': '+(typeof v==='object' ? v.keys : v).toLocaleString()).join('  ·  ') : '';
       $('kkRefresh').title = 'Merged from '+m.keys.toLocaleString()+' keys across 5 packs'+(packs?'\n'+packs:'');
       $('kkRefresh').classList.remove('pending');
       $('kkRefresh').hidden = false;
@@ -1085,9 +1071,7 @@ item_NameQDRV_Smile_Drive_Quantum=Quantum Drive`;
   loadCategories();
   // auto-load the known key list (merged from the 5 community language packs)
   loadKnownKeys();
-  loadKnownKeysMeta();
-  // fetch each pack's real last-updated date from the GitHub API (updates UI live)
-  fetchPackDates();
+  loadKnownKeysMeta();   // also applies per-pack last-updated dates from the meta file
   let rt;
   window.addEventListener('resize', ()=>{ clearTimeout(rt); rt=setTimeout(paintRows,120); });
 })();

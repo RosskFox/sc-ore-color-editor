@@ -1,11 +1,26 @@
 {
-  "refreshed": "2026-07-17T14:15:52+00:00",
+  "refreshed": "2026-07-18T14:54:51+00:00",
   "keys": 90171,
   "packs": {
-    "stock": 88992,
-    "beltakoda": 88992,
-    "exoae": 90121,
-    "exoae2": 90121,
-    "mrkraken": 90121
+    "stock": {
+      "keys": 88992,
+      "updated": "2026-05-20T02:07:14Z"
+    },
+    "beltakoda": {
+      "keys": 88992,
+      "updated": "2026-05-20T02:07:14Z"
+    },
+    "exoae": {
+      "keys": 90121,
+      "updated": "2026-07-16T07:10:18Z"
+    },
+    "exoae2": {
+      "keys": 90121,
+      "updated": "2026-07-16T07:10:18Z"
+    },
+    "mrkraken": {
+      "keys": 90121,
+      "updated": "2026-07-17T12:41:02Z"
+    }
   }
 }

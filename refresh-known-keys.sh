@@ -29,7 +29,7 @@ declare -a PACKS=(
   "beltakoda|https://api.github.com/repos/BeltaKoda/ScCompLangPackRemix/commits?path=LIVE/data/Localization/english/global.ini&sha=main&per_page=1"
   "exoae|https://api.github.com/repos/ExoAE/ScCompLangPack/commits?path=ScCompLangPack/data/Localization/english/global.ini&sha=main&per_page=1"
   "exoae2|https://api.github.com/repos/ExoAE/ScCompLangPack/commits?path=ScCompLangPackRemix2/data/Localization/english/global.ini&sha=main&per_page=1"
-  "mrkraken|https://api.github.com/repos/MrKraken/StarStrings/commits?path=Data/Localization/english/global.ini&sha=master&per_page=1"
+  "mrkraken|https://api.github.com/repos/MrKraken/StarStrings/commits?path=src/For_Players/Data/Localization/english/global.ini&sha=master&per_page=1"
 )
 
 # Load previously seen SHAs: lines of "pack_id=sha"
