@@ -677,10 +677,10 @@
   }
   // Wrap a value in an EM emphasis tag when one is assigned.
   const wrapVal = (key, val, em) => em ? `${key}=<${em}>${val}</${em}>` : `${key}=${val}`;
-  function generate(){
+  function generate(fmt = outFormat){
     const out = [];
     const fileKeys = new Set();
-    if (outFormat==='full'){
+    if (fmt==='full'){
       // full file: keys changed from the source get their (possibly edited) value wrapped in <EMn>..</EMn>, rest unchanged
       for (const e of entries){
         if (!e.hasEq){ out.push(e.raw); continue; }
@@ -913,11 +913,12 @@
   });
   $('dlBtn').addEventListener('click', ()=>{
     ensureOutput();
-    const text=outputText(); if (!text){ toast('Nothing to download'); return; }
+    // Download always exports the FULL modified ini, regardless of the pane's full/changes-only view.
+    const text = generate('full'); if (!text){ toast('Nothing to download'); return; }
     const bom = new Uint8Array([0xEF,0xBB,0xBF]);
     const blob=new Blob([bom, new TextEncoder().encode(text)],{type:'text/plain;charset=utf-8'});
     const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-    a.download = (outFormat==='full' ? 'Global' : 'Global-changes') + '.ini';
+    a.download = 'Global.ini';
     a.click(); URL.revokeObjectURL(a.href);
   });
 
