@@ -19,6 +19,7 @@ The output format matches what the app's buildKnownValues() expects:
 """
 
 import json
+import re
 import sys
 import urllib.request
 import urllib.parse
@@ -36,6 +37,54 @@ PACKS = [
 
 INI_OUT  = "known-keys.ini"
 JSON_OUT = "known-keys.json"
+
+README_OUT = "README.md"
+# pack_id -> display name as written in the README community-packs table
+README_PACK_NAMES = {
+    "stock":     "Stock global.ini",
+    "beltakoda": "BeltaKoda Remix",
+    "exoae":     "ExoAE ScCompLangPack",
+    "exoae2":    "ExoAE Remix2",
+    "mrkraken":  "MrKraken StarStrings",
+}
+
+
+def fmt_date(iso):
+    """ISO commit date -> 'Jul 17, 2026' (matches the app's en-US format)."""
+    if not iso:
+        return "unknown"
+    try:
+        dt = datetime.fromisoformat(iso.replace("Z", "+00:00"))
+        return dt.strftime("%b %-d, %Y")
+    except Exception:
+        return iso
+
+
+def update_readme_dates(per_pack):
+    """Rewrite the README community-packs table rows with fresh last-updated dates.
+    Keeps the README in sync with the packs automatically (never goes stale)."""
+    try:
+        with open(README_OUT, "r", encoding="utf-8") as f:
+            text = f.read()
+    except FileNotFoundError:
+        print(f"  · {README_OUT} not found; skipping date sync", file=sys.stderr)
+        return False
+    changed = False
+    for pid, name in README_PACK_NAMES.items():
+        info = per_pack.get(pid, {})
+        iso = info.get("updated") if isinstance(info, dict) else None
+        date_str = fmt_date(iso)
+        # match: | <Pack name> | <old date> |
+        pattern = re.compile(r"(\| " + re.escape(name) + r" \| )[^|]+?( \|)")
+        new_text, n = pattern.subn(lambda m, d=date_str: m.group(1) + d + m.group(2), text)
+        if n:
+            text = new_text
+            changed = True
+    if changed:
+        with open(README_OUT, "w", encoding="utf-8", newline="\n") as f:
+            f.write(text)
+        print(f"  updated {README_OUT} pack dates")
+    return changed
 
 
 def fetch(url):
@@ -163,6 +212,8 @@ def main():
     print(f"  wrote {INI_OUT} ({len(sorted_keys):,} keys)")
     print(f"  wrote {JSON_OUT}")
     print(f"  wrote known-keys.meta.json")
+    # keep the README community-packs table in sync with the fresh pack dates
+    update_readme_dates(per_pack)
     print("\nDone. Commit and push to update the live site.")
 
 
