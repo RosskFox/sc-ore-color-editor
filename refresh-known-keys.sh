@@ -23,16 +23,18 @@ fi
 
 SHAS_FILE="$REPO_DIR/.pack-shas"
 
-# pack_id|github_api_url  (path-scoped commits endpoint, per_page=1)
+# pack_id|raw_file_url  (raw.githubusercontent.com serves an `etag` header = sha256 of
+# the file content, via Fastly CDN with generous rate limits — no GitHub API needed,
+# so change detection never 403s under the shared-IP unauthenticated API quota.)
 declare -a PACKS=(
-  "stock|https://api.github.com/repos/BeltaKoda/ScCompLangPackRemix/commits?path=LIVE/stock-global.ini&sha=main&per_page=1"
-  "beltakoda|https://api.github.com/repos/BeltaKoda/ScCompLangPackRemix/commits?path=LIVE/data/Localization/english/global.ini&sha=main&per_page=1"
-  "exoae|https://api.github.com/repos/ExoAE/ScCompLangPack/commits?path=ScCompLangPack/data/Localization/english/global.ini&sha=main&per_page=1"
-  "exoae2|https://api.github.com/repos/ExoAE/ScCompLangPack/commits?path=ScCompLangPackRemix2/data/Localization/english/global.ini&sha=main&per_page=1"
-  "mrkraken|https://api.github.com/repos/MrKraken/StarStrings/commits?path=src/For_Players/Data/Localization/english/global.ini&sha=master&per_page=1"
+  "stock|https://raw.githubusercontent.com/BeltaKoda/ScCompLangPackRemix/main/LIVE/stock-global.ini"
+  "beltakoda|https://raw.githubusercontent.com/BeltaKoda/ScCompLangPackRemix/main/LIVE/data/Localization/english/global.ini"
+  "exoae|https://raw.githubusercontent.com/ExoAE/ScCompLangPack/main/ScCompLangPack/data/Localization/english/global.ini"
+  "exoae2|https://raw.githubusercontent.com/ExoAE/ScCompLangPack/main/ScCompLangPackRemix2/data/Localization/english/global.ini"
+  "mrkraken|https://raw.githubusercontent.com/MrKraken/StarStrings/master/src/For_Players/Data/Localization/english/global.ini"
 )
 
-# Load previously seen SHAs: lines of "pack_id=sha"
+# Load previously seen content tags: lines of "pack_id=etag"
 declare -A OLD=()
 if [[ -f "$SHAS_FILE" ]]; then
   while IFS='=' read -r k v; do [[ -n "$k" ]] && OLD["$k"]="$v"; done < "$SHAS_FILE"
@@ -43,19 +45,20 @@ NEWLINES=()
 for entry in "${PACKS[@]}"; do
   pack="${entry%%|*}"
   url="${entry#*|}"
-  sha=$(curl -fsSL -H "Accept: application/vnd.github+json" -H "User-Agent: sc-ore-color-editor" "$url" \
-        | python3 -c "import sys,json; d=json.load(sys.stdin); print(d[0]['sha'] if d else '')" 2>/dev/null || echo "")
-  if [[ -z "$sha" ]]; then
-    echo "WARN: could not fetch SHA for $pack; skipping"
+  # HEAD request only — the etag header is the file's content sha256.
+  hdr=$(curl -fsSI -H "User-Agent: sc-ore-color-editor" "$url" 2>/dev/null || true)
+  tag=$(printf '%s\n' "$hdr" | awk 'tolower($1)=="etag:"{gsub(/"/,"",$2); gsub(/\r/,"",$2); print $2; exit}')
+  if [[ -z "$tag" ]]; then
+    echo "WARN: could not fetch content tag for $pack; skipping"
     NEWLINES+=("$pack=${OLD[$pack]:-}")
     continue
   fi
-  NEWLINES+=("$pack=$sha")
-  if [[ "${OLD[$pack]:-}" != "$sha" ]]; then
-    echo "CHANGED: $pack  ${OLD[$pack]:-none} -> $sha"
+  NEWLINES+=("$pack=$tag")
+  if [[ "${OLD[$pack]:-}" != "$tag" ]]; then
+    echo "CHANGED: $pack  ${OLD[$pack]:-none} -> $tag"
     changed=1
   else
-    echo "same:   $pack  $sha"
+    echo "same:   $pack  $tag"
   fi
 done
 

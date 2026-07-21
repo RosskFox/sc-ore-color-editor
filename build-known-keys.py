@@ -37,6 +37,7 @@ PACKS = [
 
 INI_OUT  = "known-keys.ini"
 JSON_OUT = "known-keys.json"
+META_OUT = "known-keys.meta.json"
 
 README_OUT = "README.md"
 # pack_id -> display name as written in the README community-packs table
@@ -58,6 +59,22 @@ def fmt_date(iso):
         return dt.strftime("%b %-d, %Y")
     except Exception:
         return iso
+
+
+def load_old_dates():
+    """Read previously stored per-pack 'updated' dates from the existing meta file,
+    so that when the GitHub API is rate-limited (HTTP 403) we preserve the last-known
+    date instead of blanking it out. Dates never regress to null."""
+    try:
+        with open(META_OUT, "r", encoding="utf-8") as f:
+            m = json.load(f)
+        out = {}
+        for k, v in (m.get("packs") or {}).items():
+            if isinstance(v, dict) and v.get("updated"):
+                out[k] = v["updated"]
+        return out
+    except Exception:
+        return {}
 
 
 def update_readme_dates(per_pack):
@@ -145,6 +162,7 @@ def main():
 
     merged = {}          # key -> value (first pack to define it wins)
     per_pack = {}        # pack -> {keys: count, updated: ISO date}
+    old_dates = load_old_dates()  # last-known dates, used if the API is rate-limited
     for pack_id, url in PACKS:
         try:
             text = fetch(url)
@@ -152,12 +170,16 @@ def main():
             print(f"  ✗ {pack_id}: fetch failed ({e})", file=sys.stderr)
             sys.exit(1)
         keys = parse_keys(text)
-        # latest commit date for this pack's file (best-effort; non-fatal)
+        # latest commit date for this pack's file (best-effort; non-fatal).
+        # If the GitHub API is rate-limited (403), preserve the previous date.
         updated = None
         try:
             updated = fetch_commit_date(url)
         except Exception as e:
             print(f"  · {pack_id}: commit date unavailable ({e})", file=sys.stderr)
+        if not updated and old_dates.get(pack_id):
+            updated = old_dates[pack_id]
+            print(f"  · {pack_id}: preserving previous date ({updated[:10]})", file=sys.stderr)
         per_pack[pack_id] = {"keys": len(keys), "updated": updated}
         added = 0
         for k, v in keys.items():
