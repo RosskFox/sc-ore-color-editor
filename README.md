@@ -52,7 +52,7 @@ Loadable directly from within the app:
 | BeltaKoda Remix | May 20, 2026 |
 | ExoAE ScCompLangPack | Jul 16, 2026 |
 | ExoAE Remix2 | Jul 16, 2026 |
-| MrKraken StarStrings | Jul 19, 2026 |
+| MrKraken StarStrings | Jul 22, 2026 |
 
 _Pack update dates are fetched server-side by the daily refresh script and shown live in the app._
 
